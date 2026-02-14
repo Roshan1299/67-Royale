@@ -214,6 +214,9 @@ export async function POST(request: NextRequest) {
       }
 
       // Update trophies for matchmade (PvP) duels (use trophies_awarded flag to prevent double-award race condition)
+      let myTrophyDelta: number | null = null;
+      let opponentTrophyDelta: number | null = null;
+
       if (duel && (duel as Record<string, unknown>).matchmade === true && !(duel as Record<string, unknown>).trophies_awarded && myPlayer && opponent) {
         // Atomically set trophies_awarded to prevent the other submitter from also awarding
         const duelRef = db.collection('duels').doc(payload.duel_id);
@@ -239,8 +242,8 @@ export async function POST(request: NextRequest) {
             return 0; // tie
           };
 
-          const myDelta = getPlayerOutcome(myPlayer.score, opponent.score);
-          const opponentDelta = getPlayerOutcome(opponent.score, myPlayer.score);
+          myTrophyDelta = getPlayerOutcome(myPlayer.score, opponent.score);
+          opponentTrophyDelta = getPlayerOutcome(opponent.score, myPlayer.score);
 
           const updateTrophies = async (uid: string, delta: number) => {
             if (delta === 0) return;
@@ -256,8 +259,8 @@ export async function POST(request: NextRequest) {
             }
           };
 
-          if (myPlayer.uid) await updateTrophies(myPlayer.uid, myDelta);
-          if (opponent.uid) await updateTrophies(opponent.uid, opponentDelta);
+          if (myPlayer.uid) await updateTrophies(myPlayer.uid, myTrophyDelta);
+          if (opponent.uid) await updateTrophies(opponent.uid, opponentTrophyDelta);
         } catch (err) {
           console.error('Trophy update failed:', err);
         }
@@ -272,7 +275,10 @@ export async function POST(request: NextRequest) {
           opponentUsername: opponent?.username,
           outcome,
           myRankStats,
-          opponentRankStats
+          opponentRankStats,
+          myTrophyDelta,
+          opponentTrophyDelta,
+          matchmade: (duel as Record<string, unknown>)?.matchmade === true
         }
       });
     }

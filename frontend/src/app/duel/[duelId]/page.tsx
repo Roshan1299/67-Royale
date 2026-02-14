@@ -50,6 +50,12 @@ const DownloadIcon = () => (
   </svg>
 );
 
+const TrophyIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M5 3h14v2H5V3zm0 2v4c0 3.87 3.13 7 7 7s7-3.13 7-7V5h3v4a4 4 0 01-3 3.87V15h1v2H9v-2h1v-2.13A4 4 0 017 9V5H5zm2 0v4c0 2.76 2.24 5 5 5s5-2.24 5-5V5H7zm2 14h6v2H9v-2z"/>
+  </svg>
+);
+
 interface DuelData {
   id: string;
   duration_ms: number;
@@ -102,6 +108,9 @@ export default function DuelPage() {
     outcome: string;
     myRankStats?: { dailyRank: number; allTimeRank: number; percentile: number } | null;
     opponentRankStats?: { dailyRank: number; allTimeRank: number; percentile: number } | null;
+    myTrophyDelta?: number | null;
+    opponentTrophyDelta?: number | null;
+    matchmade?: boolean;
   } | null>(null);
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
@@ -432,7 +441,10 @@ export default function DuelPage() {
             opponentScore: data.result.opponentScore,
             outcome: data.result.outcome,
             myRankStats: data.result.myRankStats,
-            opponentRankStats: data.result.opponentRankStats
+            opponentRankStats: data.result.opponentRankStats,
+            myTrophyDelta: data.result.myTrophyDelta,
+            opponentTrophyDelta: data.result.opponentTrophyDelta,
+            matchmade: data.result.matchmade
           });
         }
       } catch (err) {
@@ -1310,8 +1322,21 @@ export default function DuelPage() {
                 </div>
               </div>
 
-                  {/* Rank Stats (only show if available) */}
-                  {result?.myRankStats && (
+                  {/* Trophy Delta (PvP only) */}
+                  {result?.matchmade && result?.myTrophyDelta != null && (
+                    <div className="mb-4 flex items-center justify-center gap-2 bg-white/5 rounded-lg p-3 border border-white/10">
+                      <TrophyIcon />
+                      <span className={`text-2xl font-bold ${
+                        result.myTrophyDelta > 0 ? 'text-accent-green' :
+                        result.myTrophyDelta < 0 ? 'text-red-400' : 'text-white/50'
+                      }`}>
+                        {result.myTrophyDelta > 0 ? '+' : ''}{result.myTrophyDelta}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Rank Stats (friendly only, if available) */}
+                  {!result?.matchmade && result?.myRankStats && (
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       <div className="bg-white/5 rounded-lg p-2 border border-white/10">
                         <p className="text-white/40 text-[10px] mb-0.5">Daily</p>
@@ -1354,11 +1379,11 @@ export default function DuelPage() {
                       </>
                     )}
                 <button
-                  onClick={() => router.push('/duel')}
+                  onClick={() => router.push(result?.matchmade ? '/pvp' : '/duel')}
                       className="w-full py-2.5 rounded-lg bg-white/10 text-white font-medium text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
                 >
                       <RefreshIcon />
-                      New Duel
+                      {result?.matchmade ? 'Find Match' : 'New Duel'}
                 </button>
                 <button
                   onClick={() => router.push('/')}
