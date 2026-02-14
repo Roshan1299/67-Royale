@@ -613,27 +613,28 @@ export default function DuelPage() {
     }
   }, [pageState, trackingState, startCountdown]);
 
-  // Update container size on resize - make it fill available space
+  // Update container size on resize - match solo mode sizing (600px max on desktop)
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
         const parent = containerRef.current.parentElement;
         if (parent) {
-          const availWidth = parent.clientWidth - 32;
-          const availHeight = parent.clientHeight - 120;
+          const availWidth = parent.clientWidth - 24; // Match solo mode padding
+          const availHeight = parent.clientHeight - 24;
           const isMobile = window.innerWidth < 640;
 
           if (remoteStream) {
-            // Side-by-side: each panel is half width, keep square aspect per panel
-            const maxPanelSize = isMobile ? 300 : 450;
-            const panelFromWidth = Math.floor((availWidth - 8) / 2); // 8px gap
+            // Side-by-side: each panel matches solo mode sizing
+            // Max 380px mobile, 600px desktop (same as solo)
+            const maxPanelSize = isMobile ? 380 : 1000;
+            const panelFromWidth = Math.floor((availWidth - 16) / 2); // 16px gap between panels
             const panelSize = Math.min(panelFromWidth, availHeight, maxPanelSize);
-            setContainerSize(Math.max(panelSize, 240));
+            setContainerSize(Math.max(panelSize, 600));
           } else {
-            // Single view (no remote stream yet)
-            const maxSize = isMobile ? 400 : 550;
+            // Single view - match solo mode sizing exactly
+            const maxSize = isMobile ? 380 : 1000;
             const size = Math.min(availWidth, availHeight, maxSize);
-            setContainerSize(Math.max(size, 300));
+            setContainerSize(Math.max(size, 600));
           }
         }
       }
@@ -867,12 +868,12 @@ export default function DuelPage() {
   }
 
   // Game states (calibrating, countdown, playing, results)
-  
+
   return (
     <main className="min-h-screen bg-bg-primary bg-grid-pattern bg-gradient-radial">
       <Header />
-      <div className="min-h-screen flex items-center justify-center p-4 pt-16 pb-12">
-        <div className={`flex ${remoteStream ? 'gap-2' : ''} items-start`}>
+      <div className="min-h-screen flex items-center justify-center p-2 pt-14 pb-2">
+        <div className={`flex ${remoteStream ? 'gap-4' : ''} items-center justify-center relative`}>
         {/* My camera panel - clean feed with hand tracking, minimal overlays */}
         <div
           ref={containerRef}
@@ -924,8 +925,32 @@ export default function DuelPage() {
             </span>
           </div>
         )}
+        </div>
 
-          {pageState === 'results' && (() => {
+        {/* Opponent video panel - side by side during gameplay */}
+        {remoteStream && (
+          <div
+            className="relative rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 shadow-xl"
+            style={{ width: containerSize, height: containerSize }}
+          >
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ transform: 'scaleX(-1)' }}
+            />
+            <div className="absolute bottom-2 left-2 z-10">
+              <span className="bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
+                {players.find(p => p.player_key !== myPlayerKey)?.username || 'Opponent'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Results overlay - positioned between both cameras */}
+        {pageState === 'results' && (() => {
             const is67Reps = duel && is67RepsMode(duel.duration_ms);
             const formatTime = (ms: number) => (ms / 1000).toFixed(2);
             const myPlayer = players.find(p => p.player_key === myPlayerKey);
@@ -1249,10 +1274,10 @@ export default function DuelPage() {
             };
             
             const waitingForOpponent = result?.opponentScore == null;
-            
+
             return (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm p-3">
-                <div className="glass-panel p-5 rounded-xl text-center w-full max-w-xs">
+              <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+                <div className="glass-panel p-5 rounded-xl text-center w-full max-w-sm bg-black/60 backdrop-blur-md border-2 border-white/20 shadow-2xl pointer-events-auto">
                   {/* Result header */}
                   <div className={`text-2xl font-bold mb-4 ${
                     waitingForOpponent ? 'text-white/50' :
@@ -1347,29 +1372,6 @@ export default function DuelPage() {
           </div>
             );
           })()}
-        </div>
-
-        {/* Opponent video panel - side by side during gameplay */}
-        {remoteStream && (
-          <div
-            className="relative rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 shadow-xl"
-            style={{ width: containerSize, height: containerSize }}
-          >
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              muted
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-            <div className="absolute bottom-2 left-2 z-10">
-              <span className="bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
-                {players.find(p => p.player_key !== myPlayerKey)?.username || 'Opponent'}
-              </span>
-            </div>
-          </div>
-        )}
         </div>
       </div>
     </main>
