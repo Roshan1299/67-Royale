@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { HandTracker, RepCounter, CalibrationTracker, TrackingState } from '@/lib/hand-tracking';
 import { CalibrationOverlay } from '@/components/game/CalibrationOverlay';
 import { CountdownOverlay } from '@/components/game/CountdownOverlay';
@@ -24,6 +25,7 @@ type PageState = 'loading' | 'view' | 'join' | 'calibrating' | 'countdown' | 'pl
 export default function ChallengePage() {
   const params = useParams();
   const router = useRouter();
+  const { user, getIdToken } = useAuth();
   const challengeId = params.challengeId as string;
 
   // Refs
@@ -36,13 +38,11 @@ export default function ChallengePage() {
   const repCountRef = useRef<number>(0);
   const sessionTokenRef = useRef<string | null>(null);
   const playerKeyRef = useRef<string | null>(null);
-  const usernameRef = useRef<string>('');
 
   // State
   const [pageState, setPageState] = useState<PageState>('loading');
   const [challenge, setChallenge] = useState<ChallengeData | null>(null);
   const [entries, setEntries] = useState<ChallengeEntry[]>([]);
-  const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [trackingState, setTrackingState] = useState<TrackingState | null>(null);
   const [countdownValue, setCountdownValue] = useState(3);
@@ -51,11 +51,6 @@ export default function ChallengePage() {
   const [result, setResult] = useState<{ myScore: number; opponentScore: number; outcome: string } | null>(null);
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
-
-  // Keep username ref in sync
-  useEffect(() => {
-    usernameRef.current = username;
-  }, [username]);
 
   // Load challenge data
   useEffect(() => {
@@ -111,13 +106,16 @@ export default function ChallengePage() {
 
     if (sessionTokenRef.current) {
       try {
+        const idToken = await getIdToken();
         const response = await fetch('/api/challenge/submit', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({
             token: sessionTokenRef.current,
-            score,
-            username: usernameRef.current.trim()
+            score
           })
         });
 
@@ -135,7 +133,7 @@ export default function ChallengePage() {
     }
 
     setPageState('results');
-  }, []);
+  }, [getIdToken, challenge]);
 
   // Start gameplay
   const startGameplay = useCallback(() => {
@@ -252,11 +250,6 @@ export default function ChallengePage() {
 
   // Start playing
   const handlePlay = async () => {
-    if (!username.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-
     setError(null);
     playerKeyRef.current = crypto.randomUUID();
 
@@ -354,28 +347,15 @@ export default function ChallengePage() {
             </div>
           )}
 
-          <div className="mb-6">
-            <label className="text-white/70 text-sm mb-2 block">Your Name</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={20}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-green"
-            />
-          </div>
+          <p className="text-white/60 text-sm text-center mb-6">
+            Playing as <span className="text-white font-semibold">{user?.displayName || 'Anonymous'}</span>
+          </p>
 
           {error && <p className="text-red-400 text-sm text-center mb-4">{error}</p>}
 
           <button
             onClick={handlePlay}
-            disabled={!username.trim()}
-            className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
-              !username.trim()
-                ? 'bg-white/10 text-white/50 cursor-not-allowed'
-                : 'bg-accent-green text-black hover:bg-accent-green/90'
-            }`}
+            className="w-full py-4 rounded-xl font-bold text-lg transition-all bg-accent-green text-black hover:bg-accent-green/90"
           >
             {challenger ? 'Accept Challenge' : 'Play First'}
           </button>
@@ -405,7 +385,8 @@ export default function ChallengePage() {
   }
 
   if (pageState === 'results') {
-    const myEntry = entries.find(e => e.player_key === playerKeyRef.current) || { score: finalScore, username };
+    const displayName = user?.displayName || 'Anonymous';
+    const myEntry = entries.find(e => e.player_key === playerKeyRef.current) || { score: finalScore, username: displayName };
     const opponentEntry = entries.find(e => e.player_key !== playerKeyRef.current);
 
     let outcome: 'win' | 'lose' | 'tie' | null = null;
@@ -432,7 +413,7 @@ export default function ChallengePage() {
 
               <div className="flex justify-center gap-8 mb-6">
                 <div className="text-center">
-                  <p className="text-white/60 text-sm">{myEntry.username || 'You'}</p>
+                  <p className="text-white/60 text-sm">{myEntry.username || displayName}</p>
                   <p className="text-3xl font-bold text-white">{finalScore || myEntry.score}</p>
                 </div>
                 <div className="text-white/40 text-2xl self-center">vs</div>

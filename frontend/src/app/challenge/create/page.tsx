@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { DURATION_6_7S, DURATION_20S, MIN_CUSTOM_DURATION, MAX_CUSTOM_DURATION } from '@/types/game';
 import { HandTracker, RepCounter, CalibrationTracker, TrackingState } from '@/lib/hand-tracking';
 import { CalibrationOverlay } from '@/components/game/CalibrationOverlay';
@@ -12,6 +13,7 @@ type PageState = 'setup' | 'calibrating' | 'countdown' | 'playing' | 'submitting
 
 export default function CreateChallengePage() {
   const router = useRouter();
+  const { user, getIdToken } = useAuth();
   
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -23,12 +25,10 @@ export default function CreateChallengePage() {
   const repCountRef = useRef<number>(0);
   const sessionTokenRef = useRef<string | null>(null);
   const challengeIdRef = useRef<string | null>(null);
-  const usernameRef = useRef<string>('');
   const durationRef = useRef<number>(DURATION_6_7S);
   
   // State
   const [pageState, setPageState] = useState<PageState>('setup');
-  const [username, setUsername] = useState('');
   const [duration, setDuration] = useState<number>(DURATION_6_7S);
   const [customSeconds, setCustomSeconds] = useState('10.0');
   const [showCustom, setShowCustom] = useState(false);
@@ -39,11 +39,6 @@ export default function CreateChallengePage() {
   const [finalScore, setFinalScore] = useState(0);
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
-
-  // Keep refs in sync
-  useEffect(() => {
-    usernameRef.current = username;
-  }, [username]);
 
   useEffect(() => {
     durationRef.current = duration;
@@ -90,13 +85,16 @@ export default function CreateChallengePage() {
 
     if (sessionTokenRef.current) {
       try {
+        const idToken = await getIdToken();
         await fetch('/api/challenge/submit', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({
             token: sessionTokenRef.current,
-            score,
-            username: usernameRef.current.trim()
+            score
           })
         });
       } catch (err) {
@@ -105,7 +103,7 @@ export default function CreateChallengePage() {
     }
 
     setPageState('done');
-  }, []);
+  }, [getIdToken]);
 
   // Start gameplay
   const startGameplay = useCallback(() => {
@@ -235,19 +233,17 @@ export default function CreateChallengePage() {
 
   // Create challenge and start calibration
   const handleStart = async () => {
-    if (!username.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-
     setError(null);
 
     try {
+      const idToken = await getIdToken();
       const response = await fetch('/api/challenge/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
-          username: username.trim(),
           duration_ms: duration
         })
       });
@@ -315,17 +311,9 @@ export default function CreateChallengePage() {
             🎯 Create a Challenge
           </h1>
 
-          <div className="mb-6">
-            <label className="text-white/70 text-sm mb-2 block">Your Name</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={20}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-green"
-            />
-          </div>
+          <p className="text-white/60 text-sm text-center mb-6">
+            Creating as <span className="text-white font-semibold">{user?.displayName || 'Anonymous'}</span>
+          </p>
 
           <div className="mb-6">
             <label className="text-white/70 text-sm mb-2 block">Duration</label>
@@ -384,12 +372,7 @@ export default function CreateChallengePage() {
 
           <button
             onClick={handleStart}
-            disabled={!username.trim()}
-            className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
-              !username.trim()
-                ? 'bg-white/10 text-white/50 cursor-not-allowed'
-                : 'bg-accent-green text-black hover:bg-accent-green/90'
-            }`}
+            className="w-full py-4 rounded-xl font-bold text-lg transition-all bg-accent-green text-black hover:bg-accent-green/90"
           >
             Start Challenge
           </button>
