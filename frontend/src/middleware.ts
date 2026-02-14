@@ -6,6 +6,7 @@ const ALLOWED_ORIGINS = [
   'https://67ranked.com',
   'https://www.67ranked.com',
   'https://67ranked.vercel.app',
+  'https://67-silly-con-valley-hacks.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
