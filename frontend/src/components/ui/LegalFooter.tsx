@@ -116,7 +116,7 @@ const PrivacyContent = () => (
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">6. Third-Party Services</h3>
-      <p>67Ranked may use third-party services to operate, including database/auth providers (e.g., Supabase), client-side computer vision libraries, and optional OAuth providers for login/verification. Each third party operates under its own privacy policies.</p>
+      <p>67Ranked may use third-party services to operate, including database/auth providers (e.g., Firebase), client-side computer vision libraries, and Google OAuth for login/verification. Each third party operates under its own privacy policies.</p>
     </section>
 
     <section className="space-y-2">
