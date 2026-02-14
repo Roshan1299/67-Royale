@@ -5,10 +5,6 @@ import { GamePanel } from '@/components/game';
 import { LeaderboardPanel } from '@/components/leaderboard';
 import { Header } from '@/components/ui/Header';
 
-interface Stats {
-  totalGames: number;
-}
-
 // Leaderboard icon for minimized state - simple trophy
 const LeaderboardIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -21,24 +17,25 @@ const LeaderboardIcon = () => (
 
 export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [stats, setStats] = useState<Stats | null>(null);
   const [isLeaderboardMinimized, setIsLeaderboardMinimized] = useState(false);
 
   const fetchStats = useCallback(async () => {
     try {
       const response = await fetch('/api/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      if (response.ok) await response.json();
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
   }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    let cancelled = false;
+    fetch('/api/stats')
+      .then((res) => (res.ok ? res.json() : null))
+      .then(() => { if (!cancelled) setRefreshTrigger((t) => t + 1); })
+      .catch((err) => console.error('Failed to fetch stats:', err));
+    return () => { cancelled = true; };
+  }, []);
 
   const handleScoreSubmitted = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
