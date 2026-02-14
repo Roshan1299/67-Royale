@@ -520,123 +520,13 @@ export class BrainrotDetector {
   }
 
   private drawCalibrationOverlay(): void {
-    const progress = this.getCalibrationProgress();
-    const { bothHandsVisible, leftY, rightY } = this.state;
-
-    // Background
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    this.ctx.fillRect(10, 10, 300, 120);
-
-    // Title
-    this.ctx.font = "bold 20px Arial";
-    this.ctx.fillStyle = "#feca57";
-    this.ctx.fillText("CALIBRATING...", 25, 38);
-
-    // Instructions
-    this.ctx.font = "14px Arial";
-    this.ctx.fillStyle = "#FFFFFF";
-    this.ctx.fillText("Hold both hands level at hip height", 25, 60);
-
-    // Progress bar background
-    this.ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-    this.ctx.fillRect(25, 75, 260, 20);
-
-    // Check if hands are level
-    let handsLevel = false;
-    if (bothHandsVisible && leftY !== null && rightY !== null) {
-      handsLevel = Math.abs(leftY - rightY) <= this.config.calibrationTolerance;
-    }
-
-    // Progress bar fill
-    this.ctx.fillStyle = handsLevel ? "#00FF88" : "#FF6666";
-    this.ctx.fillRect(25, 75, 260 * progress, 20);
-
-    // Progress text
-    this.ctx.font = "bold 12px Arial";
-    this.ctx.fillStyle = "#000000";
-    const seconds = Math.ceil((1 - progress) * this.config.calibrationDuration / 1000);
-    this.ctx.fillText(`${seconds}s`, 145, 89);
-
-    // Status text (from original)
-    this.ctx.font = "13px Arial";
-    if (!bothHandsVisible) {
-      this.ctx.fillStyle = "#FF6666";
-      this.ctx.fillText("⚠ Show both hands", 25, 115);
-    } else if (!handsLevel) {
-      this.ctx.fillStyle = "#FFAA00";
-      this.ctx.fillText("⚠ Keep hands level", 25, 115);
-    } else {
-      this.ctx.fillStyle = "#00FF88";
-      this.ctx.fillText("✓ Hold steady...", 25, 115);
-    }
-
-    // Draw baseline guide line
-    if (bothHandsVisible && leftY !== null && rightY !== null) {
-      const avgY = ((leftY + rightY) / 2) * this.canvas.height;
-      this.ctx.strokeStyle = handsLevel ? "#00FF88" : "#FFAA00";
-      this.ctx.lineWidth = 2;
-      this.ctx.setLineDash([10, 5]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, avgY);
-      this.ctx.lineTo(this.canvas.width, avgY);
-      this.ctx.stroke();
-      this.ctx.setLineDash([]);
-    }
+    // Canvas overlay removed - React components handle calibration UI
+    return;
   }
 
   private drawActiveOverlay(): void {
-    const { count, isCurrentlyAlternating, bothHandsVisible, calibration } = this.state;
-
-    // Main count box
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-    this.ctx.fillRect(10, 10, 180, 100);
-
-    // Count - big and bold
-    this.ctx.font = "bold 56px Arial";
-    this.ctx.fillStyle = isCurrentlyAlternating ? "#00FF88" : "#feca57";
-    this.ctx.fillText(String(count), 25, 72);
-
-    // Label
-    this.ctx.font = "bold 12px Arial";
-    this.ctx.fillStyle = "#FFFFFF";
-    this.ctx.fillText("6-7 COUNT", 100, 35);
-
-    // Status
-    this.ctx.font = "bold 13px Arial";
-    if (!bothHandsVisible) {
-      this.ctx.fillStyle = "#FF6666";
-      this.ctx.fillText("Show both hands", 25, 95);
-    } else if (isCurrentlyAlternating) {
-      this.ctx.fillStyle = "#00FF88";
-      this.ctx.fillText("🔥 ACTIVE", 25, 95);
-    } else {
-      this.ctx.fillStyle = "#FFAA00";
-      this.ctx.fillText("Ready - start moving!", 25, 95);
-    }
-
-    // Velocity indicators (up/down movement bars)
-    this.drawVelocityBar(150, 55, this.state.leftVelocity, "#FF6B6B");
-    this.drawVelocityBar(165, 55, this.state.rightVelocity, "#4ECDC4");
-
-    // Draw baseline reference line (faint)
-    if (calibration?.baselineY) {
-      const baselinePixelY = calibration.baselineY * this.canvas.height;
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      this.ctx.lineWidth = 1;
-      this.ctx.setLineDash([5, 5]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, baselinePixelY);
-      this.ctx.lineTo(this.canvas.width, baselinePixelY);
-      this.ctx.stroke();
-      this.ctx.setLineDash([]);
-    }
-
-    // Active border
-    if (isCurrentlyAlternating) {
-      this.ctx.strokeStyle = "#00FF88";
-      this.ctx.lineWidth = 6;
-      this.ctx.strokeRect(3, 3, this.canvas.width - 6, this.canvas.height - 6);
-    }
+    // Canvas overlay removed - React components handle gameplay UI
+    return;
   }
 
   private drawVelocityBar(x: number, y: number, velocity: number, color: string): void {

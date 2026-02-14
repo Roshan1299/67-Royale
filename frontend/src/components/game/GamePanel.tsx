@@ -143,30 +143,55 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
     setGameState('selecting');
   };
 
-  // Handle calibration - after mode selection, go to countdown when calibrated
+  // Handle calibration - check if hands are level before starting countdown
   useEffect(() => {
-    if (gameState !== 'calibrating' || !calibrationTrackerRef.current) return;
-    
-    const checkCalibration = () => {
-      if (calibrationTrackerRef.current && trackingState) {
-        const calibrated = calibrationTrackerRef.current.processFrame(trackingState.bothHandsDetected);
-        if (calibrated) {
-          startCountdown();
+    if (gameState !== 'calibrating' || !trackingState || !trackerRef.current) return;
+
+    const detector = (trackerRef.current as any).detector;
+    if (!detector) return;
+
+    const checkHandsLevel = () => {
+      if (gameState !== 'calibrating') return;
+
+      // Check if both hands are detected
+      if (trackingState.bothHandsDetected) {
+        const detectorState = (detector as any).state;
+        const leftY = detectorState.leftY;
+        const rightY = detectorState.rightY;
+        const calibrationTolerance = (detector as any).config.calibrationTolerance;
+
+        // Check if hands are level (same logic as BrainrotDetector calibration)
+        if (leftY !== null && rightY !== null) {
+          const yDiff = Math.abs(leftY - rightY);
+          const handsLevel = yDiff <= calibrationTolerance;
+
+          if (handsLevel) {
+            const phase = detector.getPhase();
+
+            // Only start once when hands become level
+            if (phase === 'idle') {
+              console.log('✅ Hands level detected - starting calibration + countdown');
+              detector.startCalibration(); // Start 3s calibration
+              startCountdown(); // Start 3s countdown (happens simultaneously)
+            }
+          }
         }
       }
-      
+
+      // Continue checking if still in calibrating state
       if (gameState === 'calibrating') {
-        animationFrameRef.current = requestAnimationFrame(checkCalibration);
+        animationFrameRef.current = requestAnimationFrame(checkHandsLevel);
       }
     };
-    
-    animationFrameRef.current = requestAnimationFrame(checkCalibration);
-    
+
+    animationFrameRef.current = requestAnimationFrame(checkHandsLevel);
+
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
+
   // startCountdown intentionally omitted to avoid effect re-running every render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, trackingState]);
@@ -208,26 +233,81 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
     }
   };
 
-  // Countdown sequence
+  // Countdown sequence - monitors hands during countdown
   const startCountdown = () => {
     setGameState('countdown');
     setCountdownValue(3);
-    
+
     let count = 3;
-    const countdownTick = () => {
-      if (count > 0) {
-        setCountdownValue(count);
+    let countdownStartTime = Date.now();
+
+    const checkCountdown = () => {
+      // Check if hands are still level
+      if (!trackerRef.current) {
+        // Abort if tracker is gone
+        setGameState('calibrating');
+        return;
+      }
+
+      const detector = (trackerRef.current as any).detector;
+      if (!detector) {
+        setGameState('calibrating');
+        return;
+      }
+
+      const detectorState = (detector as any).state;
+      const leftY = detectorState.leftY;
+      const rightY = detectorState.rightY;
+      const calibrationTolerance = (detector as any).config.calibrationTolerance;
+      const bothHandsVisible = detectorState.bothHandsVisible;
+
+      // If hands disappear or become unlevel, reset to calibrating
+      if (!bothHandsVisible || leftY === null || rightY === null) {
+        console.log('⚠️ Hands lost during countdown - resetting');
+        if (timerRef.current) clearTimeout(timerRef.current);
+        detector.reset(); // Reset detector to idle
+        setGameState('calibrating');
+        return;
+      }
+
+      const yDiff = Math.abs(leftY - rightY);
+      const handsLevel = yDiff <= calibrationTolerance;
+
+      if (!handsLevel) {
+        console.log('⚠️ Hands not level during countdown - resetting');
+        if (timerRef.current) clearTimeout(timerRef.current);
+        detector.reset(); // Reset detector to idle
+        setGameState('calibrating');
+        return;
+      }
+
+      // Check if 1 second has passed
+      const elapsed = Date.now() - countdownStartTime;
+      if (elapsed >= 1000) {
         count--;
-        timerRef.current = setTimeout(countdownTick, 1000);
-      } else {
-        setCountdownValue(0);
-        timerRef.current = setTimeout(() => {
-          startGameplay();
-        }, 500);
+        countdownStartTime = Date.now();
+
+        if (count >= 0) {
+          setCountdownValue(count);
+        }
+
+        if (count < 0) {
+          // Countdown complete - start gameplay
+          setCountdownValue(0);
+          setTimeout(() => {
+            startGameplay();
+          }, 500);
+          return;
+        }
+      }
+
+      // Continue checking
+      if (gameState === 'countdown' || count >= 0) {
+        timerRef.current = setTimeout(checkCountdown, 50) as any;
       }
     };
-    
-    countdownTick();
+
+    checkCountdown();
   };
 
   // Start gameplay
@@ -498,7 +578,46 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
           />
         )}
 
-        {/* CalibrationOverlay removed - canvas handles calibration display */}
+        {gameState === 'calibrating' && (() => {
+          // Calculate if hands are level (same logic as calibration check)
+          let handsLevel = false;
+          if (trackingState?.bothHandsDetected && trackerRef.current) {
+            const detector = (trackerRef.current as any).detector;
+            if (detector) {
+              const detectorState = (detector as any).state;
+              const leftY = detectorState.leftY;
+              const rightY = detectorState.rightY;
+              const calibrationTolerance = (detector as any).config.calibrationTolerance;
+
+              if (leftY !== null && rightY !== null) {
+                const yDiff = Math.abs(leftY - rightY);
+                handsLevel = yDiff <= calibrationTolerance;
+              }
+            }
+          }
+
+          return (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+              <div className="bg-black/60 backdrop-blur-md rounded-xl px-8 py-6 text-center border border-white/20">
+                <p className="text-white text-2xl font-bold mb-2">Hold your hands center level</p>
+                <p className="text-white/70 text-base mb-4">Stand back &bull; Good lighting</p>
+
+                {/* Status indicator */}
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  {!trackingState?.bothHandsDetected && (
+                    <span className="text-red-400 font-medium">⚠ Show both hands</span>
+                  )}
+                  {trackingState?.bothHandsDetected && !handsLevel && (
+                    <span className="text-yellow-400 font-medium">⚠ Keep hands level</span>
+                  )}
+                  {trackingState?.bothHandsDetected && handsLevel && (
+                    <span className="text-green-400 font-medium animate-pulse">✓ Hold steady...</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {gameState === 'selecting' && (
           <ModeSelector
@@ -507,11 +626,66 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
           />
         )}
 
-        {gameState === 'countdown' && (
-          <CountdownOverlay value={countdownValue} />
-        )}
+        {gameState === 'countdown' && (() => {
+          // Check if hands are still level during countdown
+          let handsLevel = true;
+          let bothHandsDetected = true;
 
-        {/* GameOverlay removed - canvas handles rep count and timer display */}
+          if (trackerRef.current) {
+            const detector = (trackerRef.current as any).detector;
+            if (detector) {
+              const detectorState = (detector as any).state;
+              bothHandsDetected = detectorState.bothHandsVisible;
+
+              if (bothHandsDetected) {
+                const leftY = detectorState.leftY;
+                const rightY = detectorState.rightY;
+                const calibrationTolerance = (detector as any).config.calibrationTolerance;
+
+                if (leftY !== null && rightY !== null) {
+                  const yDiff = Math.abs(leftY - rightY);
+                  handsLevel = yDiff <= calibrationTolerance;
+                }
+              }
+            }
+          }
+
+          return (
+            <>
+              <CountdownOverlay value={countdownValue} />
+              {/* Show warning if hands become unlevel */}
+              {!bothHandsDetected && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20 pointer-events-none">
+                  <span className="bg-red-500/80 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    ⚠ Show both hands
+                  </span>
+                </div>
+              )}
+              {bothHandsDetected && !handsLevel && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20 pointer-events-none">
+                  <span className="bg-yellow-500/80 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    ⚠ Keep hands level
+                  </span>
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        {gameState === 'playing' && (
+          <div className="absolute top-3 left-0 right-0 flex flex-col items-center z-10 pointer-events-none">
+            <div className="bg-black/50 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+              <span className="text-white text-2xl font-black tabular-nums">
+                {is67RepsMode(duration) ? `${displayRepCount} / 67` : displayRepCount}
+              </span>
+              <span className="text-white/70 text-sm ml-2 font-medium tabular-nums">
+                {is67RepsMode(duration)
+                  ? `${(elapsedTime / 1000).toFixed(1)}s`
+                  : `${(timeRemaining / 1000).toFixed(1)}s`}
+              </span>
+            </div>
+          </div>
+        )}
 
         {gameState === 'ended' && (
           <EndScreen
