@@ -14,6 +14,7 @@ export function Header({ showNav = true }: HeaderProps) {
   const isDuelPage = pathname?.startsWith('/duel');
   const isPvpPage = pathname?.startsWith('/pvp');
   const isLeaderboardPage = pathname?.startsWith('/leaderboard');
+  const isTournamentPage = pathname?.startsWith('/tournament');
   const [playerCount, setPlayerCount] = useState<number | null>(null);
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -104,7 +105,7 @@ export function Header({ showNav = true }: HeaderProps) {
             <Link
               href="/"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                !isDuelPage && !isPvpPage && !isLeaderboardPage
+                !isDuelPage && !isPvpPage && !isLeaderboardPage && !isTournamentPage
                   ? 'bg-accent-green text-black'
                   : 'text-white/60 hover:text-white'
               }`}
@@ -130,6 +131,20 @@ export function Header({ showNav = true }: HeaderProps) {
               }`}
             >
               FRIENDLY
+            </Link>
+            <Link
+              href="/tournament"
+              className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all relative ${
+                isTournamentPage
+                  ? 'bg-accent-green text-black'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              TOURNAMENT
+              {/* Lock icon overlay */}
+              <svg className="w-3 h-3 absolute -top-0.5 -right-0.5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/>
+              </svg>
             </Link>
           </div>
         )}
