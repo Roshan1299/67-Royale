@@ -46,7 +46,7 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
           <div className="w-10 h-10 sm:w-14 sm:h-14 bg-accent-green rounded-lg sm:rounded-xl flex items-center justify-center green-glow">
             <span className="text-lg sm:text-2xl font-black text-black">67</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">RANKED</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">ROYALE</h1>
         </div>
         
         {/* Tagline */}

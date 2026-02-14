@@ -100,7 +100,7 @@ export default function DuelResultsPage() {
     
     if (navigator.share) {
       try {
-        await navigator.share({ title: '67Ranked Duel', text: shareText, url: shareUrl });
+        await navigator.share({ title: '67 Royale Duel', text: shareText, url: shareUrl });
       } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);

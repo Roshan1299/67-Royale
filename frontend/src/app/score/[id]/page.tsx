@@ -118,7 +118,7 @@ export default function ScorePage() {
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: '67Ranked', text: shareText, url: shareUrl });
+        await navigator.share({ title: '67 Royale', text: shareText, url: shareUrl });
       } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
@@ -377,7 +377,7 @@ export default function ScorePage() {
             <p className="text-white/50 mb-6">This score may have been removed or the link is invalid.</p>
             <Link href="/" className="btn-primary w-full">
               <PlayIcon />
-              Play 67Ranked
+              Play 67 Royale
             </Link>
           </div>
         </div>

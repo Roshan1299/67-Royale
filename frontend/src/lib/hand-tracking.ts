@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * MediaPipe Hand Tracking Adapter for 67Ranked
+ * MediaPipe Hand Tracking Adapter for 67 Royale
  *
  * This adapter wraps the BrainrotDetector (MediaPipe Hands) to provide
  * the same interface as the original HandTracker, allowing seamless

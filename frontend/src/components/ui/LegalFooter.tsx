@@ -11,17 +11,17 @@ const TermsContent = () => (
     
     <section className="space-y-2">
       <h3 className="text-white font-semibold">1. Acceptance of Terms</h3>
-      <p>By accessing or using 67Ranked (&quot;67Ranked&quot;, the &quot;Game&quot;, or the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not access or use the Service.</p>
+      <p>By accessing or using 67 Royale (&quot;67 Royale&quot;, the &quot;Game&quot;, or the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not access or use the Service.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">2. Description of Service</h3>
-      <p>67Ranked is a browser-based, camera-powered game that measures fast hand movements in real time to generate scores across multiple challenge modes (including time-based and repetition-based formats). Scores may be ranked on public leaderboards and optionally shared by users.</p>
+      <p>67 Royale is a browser-based, camera-powered game that measures fast hand movements in real time to generate scores across multiple challenge modes (including time-based and repetition-based formats). Scores may be ranked on public leaderboards and optionally shared by users.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">3. Accounts &amp; Access</h3>
-      <p>You may use 67Ranked either anonymously, without creating an account, or with an account using supported authentication methods (such as email or third-party sign-in). If you create an account, you are responsible for safeguarding your login credentials and all activity associated with your account.</p>
+      <p>You may use 67 Royale either anonymously, without creating an account, or with an account using supported authentication methods (such as email or third-party sign-in). If you create an account, you are responsible for safeguarding your login credentials and all activity associated with your account.</p>
     </section>
 
     <section className="space-y-2">
@@ -40,12 +40,12 @@ const TermsContent = () => (
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">5. Scores, Rankings &amp; Leaderboards</h3>
-      <p>Scores submitted to 67Ranked may appear on public leaderboards. Leaderboards may reset, archive, or change formats over time. Anti-cheat systems may automatically flag or reject suspicious scores. Manual moderation may be applied where necessary. Leaderboard placement is not guaranteed, and we may remove scores that violate these Terms or compromise fairness.</p>
+      <p>Scores submitted to 67 Royale may appear on public leaderboards. Leaderboards may reset, archive, or change formats over time. Anti-cheat systems may automatically flag or reject suspicious scores. Manual moderation may be applied where necessary. Leaderboard placement is not guaranteed, and we may remove scores that violate these Terms or compromise fairness.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">6. Camera Usage &amp; Motion Detection</h3>
-      <p>67Ranked requires access to your device&apos;s camera to function.</p>
+      <p>67 Royale requires access to your device&apos;s camera to function.</p>
       <ul className="list-disc list-inside space-y-1 pl-2 text-white/60">
         <li>All video processing occurs locally on your device</li>
         <li>We do not record, store, transmit, or view your camera feed</li>
@@ -56,27 +56,27 @@ const TermsContent = () => (
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">7. Intellectual Property</h3>
-      <p>All code, game logic, visual design, branding, UI/UX, and related assets of 67Ranked are owned by us or licensed for use. You may not copy, modify, distribute, reverse engineer, or exploit any part of the Service without prior written permission.</p>
+      <p>All code, game logic, visual design, branding, UI/UX, and related assets of 67 Royale are owned by us or licensed for use. You may not copy, modify, distribute, reverse engineer, or exploit any part of the Service without prior written permission.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">8. Disclaimer</h3>
-      <p>67Ranked is provided &quot;as is&quot; and &quot;as available.&quot; We make no guarantees regarding accuracy of motion detection, score consistency across devices, uptime or uninterrupted access, or fitness/performance metrics. The Service is not intended for medical, fitness, or diagnostic purposes.</p>
+      <p>67 Royale is provided &quot;as is&quot; and &quot;as available.&quot; We make no guarantees regarding accuracy of motion detection, score consistency across devices, uptime or uninterrupted access, or fitness/performance metrics. The Service is not intended for medical, fitness, or diagnostic purposes.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">9. Limitation of Liability</h3>
-      <p>To the maximum extent permitted by law, 67Ranked and its operators shall not be liable for any indirect, incidental, consequential, or special damages arising from your use of the Service.</p>
+      <p>To the maximum extent permitted by law, 67 Royale and its operators shall not be liable for any indirect, incidental, consequential, or special damages arising from your use of the Service.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">10. Changes to Terms</h3>
-      <p>We may update these Terms at any time. Continued use of 67Ranked after updates constitutes acceptance of the revised Terms.</p>
+      <p>We may update these Terms at any time. Continued use of 67 Royale after updates constitutes acceptance of the revised Terms.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">11. Contact</h3>
-      <p>For questions or concerns regarding these Terms, please use the contact or support links available on the 67Ranked website.</p>
+      <p>For questions or concerns regarding these Terms, please use the contact or support links available on the 67 Royale website.</p>
     </section>
   </div>
 );
@@ -87,7 +87,7 @@ const PrivacyContent = () => (
     
     <section className="space-y-2">
       <h3 className="text-white font-semibold">1. Information We Collect</h3>
-      <p>Depending on how you use 67Ranked, we may collect:</p>
+      <p>Depending on how you use 67 Royale, we may collect:</p>
       <ul className="list-disc list-inside space-y-1 pl-2 text-white/60">
         <li>Gameplay Data: Scores, timestamps, modes played, and leaderboard rankings</li>
         <li>Anonymous Play Data: Display name and score only (no account required)</li>
@@ -116,12 +116,12 @@ const PrivacyContent = () => (
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">6. Third-Party Services</h3>
-      <p>67Ranked may use third-party services to operate, including database/auth providers (e.g., Firebase), client-side computer vision libraries, and Google OAuth for login/verification. Each third party operates under its own privacy policies.</p>
+      <p>67 Royale may use third-party services to operate, including database/auth providers (e.g., Firebase), client-side computer vision libraries, and Google OAuth for login/verification. Each third party operates under its own privacy policies.</p>
     </section>
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">7. Advertising &amp; Analytics</h3>
-      <p>67Ranked may display ads or use analytics tools in the future. Third parties may collect limited non-personal data (e.g., IP, device type). We do not receive personal data from advertisers. Consent tools may be provided where legally required.</p>
+      <p>67 Royale may display ads or use analytics tools in the future. Third parties may collect limited non-personal data (e.g., IP, device type). We do not receive personal data from advertisers. Consent tools may be provided where legally required.</p>
     </section>
 
     <section className="space-y-2">
@@ -131,7 +131,7 @@ const PrivacyContent = () => (
 
     <section className="space-y-2">
       <h3 className="text-white font-semibold">9. Children&apos;s Privacy</h3>
-      <p>67Ranked is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided personal information, please contact us and we will take steps to delete such information.</p>
+      <p>67 Royale is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided personal information, please contact us and we will take steps to delete such information.</p>
     </section>
 
     <section className="space-y-2">
@@ -154,7 +154,7 @@ export function LegalFooter() {
       <footer className="fixed bottom-0 left-0 right-0 z-40 px-3 py-2 sm:px-4 sm:py-2.5 bg-black/30 backdrop-blur-md border-t border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <span className="text-[10px] sm:text-xs text-white/30">
-            © 2026 67Ranked
+            © 2026 67 Royale
           </span>
           <div className="flex items-center gap-3 sm:gap-4">
             <button

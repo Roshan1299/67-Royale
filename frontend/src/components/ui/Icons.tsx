@@ -1,4 +1,4 @@
-// Professional SVG Icons for 67Ranked
+// Professional SVG Icons for 67 Royale
 
 interface IconProps {
   className?: string;

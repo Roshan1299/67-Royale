@@ -17,12 +17,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "67Ranked - Hand Motion Game",
+  title: "67 Royale - Hand Motion Game",
   description: "Count 67 reps as fast as you can! A camera-based hand-motion game where players compete on the leaderboard.",
   keywords: ["game", "hand tracking", "leaderboard", "competition", "mediapipe"],
-  authors: [{ name: "67Ranked" }],
+  authors: [{ name: "67 Royale" }],
   openGraph: {
-    title: "67Ranked - Hand Motion Game",
+    title: "67 Royale - Hand Motion Game",
     description: "Count 67 reps as fast as you can!",
     type: "website",
   },

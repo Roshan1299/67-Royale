@@ -104,7 +104,7 @@ function LoginScreen({ onSignIn }: { onSignIn: () => void }) {
         <div className="w-16 h-16 bg-accent-green rounded-xl flex items-center justify-center mx-auto mb-4">
           <span className="text-3xl font-bold text-black">67</span>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2">67Ranked</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">67 Royale</h1>
         <p className="text-white/50 text-sm mb-6">Sign in to start playing</p>
         <button
           onClick={handleSignIn}

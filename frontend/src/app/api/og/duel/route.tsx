@@ -310,7 +310,7 @@ export async function GET(request: NextRequest) {
           >
             <span style={{ fontSize: 40, fontWeight: 'bold', color: '#000' }}>67</span>
           </div>
-          <span style={{ fontSize: 48, fontWeight: 'bold', color: '#fff' }}>67RANKED</span>
+          <span style={{ fontSize: 48, fontWeight: 'bold', color: '#fff' }}>67 ROYALE</span>
           <span style={{ fontSize: 24, color: 'rgba(255,255,255,0.5)', marginTop: 10 }}>
             Duel Mode
           </span>

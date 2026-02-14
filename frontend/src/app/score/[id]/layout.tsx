@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!scoreDoc.exists) {
       return {
-        title: '67Ranked - Score Not Found',
+        title: '67 Royale - Score Not Found',
         description: 'This score could not be found.',
       };
     }
@@ -37,10 +37,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? `${(score.score / 1000).toFixed(2)}s`
       : `${score.score} reps`;
 
-    const title = `${score.username} scored ${scoreDisplay} on 67Ranked`;
+    const title = `${score.username} scored ${scoreDisplay} on 67 Royale`;
     const description = is67Reps
-      ? `${score.username} completed 67 reps in ${scoreDisplay} on 67Ranked. Can you beat their time?`
-      : `${score.username} got ${scoreDisplay} in ${modeLabel} on 67Ranked. Can you beat their score?`;
+      ? `${score.username} completed 67 reps in ${scoreDisplay} on 67 Royale. Can you beat their time?`
+      : `${score.username} got ${scoreDisplay} in ${modeLabel} on 67 Royale. Can you beat their score?`;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://67ranked.com';
 
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             url: `${appUrl}/api/og?id=${id}`,
             width: 1200,
             height: 630,
-            alt: `${score.username}'s score on 67Ranked`,
+            alt: `${score.username}'s score on 67 Royale`,
           },
         ],
       },
@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   } catch {
     return {
-      title: '67Ranked - Hand Motion Game',
+      title: '67 Royale - Hand Motion Game',
       description: 'Compete globally in this camera-powered hand motion game.',
     };
   }

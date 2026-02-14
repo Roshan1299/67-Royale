@@ -106,7 +106,7 @@ export function EndScreen({
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: '67Ranked', text: shareText, url: shareUrl });
+        await navigator.share({ title: '67 Royale', text: shareText, url: shareUrl });
       } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);

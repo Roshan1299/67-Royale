@@ -974,7 +974,7 @@ export default function DuelPage() {
               if (navigator.share) {
                 try {
                   await navigator.share({
-                    title: '67Ranked Duel',
+                    title: '67 Royale Duel',
                     text: shareText,
                     url: duelUrl
                   });

@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!duelDoc.exists) {
       return {
-        title: 'Duel Results | 67Ranked',
-        description: 'View duel results on 67Ranked',
+        title: 'Duel Results | 67 Royale',
+        description: 'View duel results on 67 Royale',
       };
     }
 
@@ -41,8 +41,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!duel || !players || players.length < 2) {
       return {
-        title: 'Duel Results | 67Ranked',
-        description: 'View duel results on 67Ranked',
+        title: 'Duel Results | 67 Royale',
+        description: 'View duel results on 67 Royale',
       };
     }
 
@@ -80,13 +80,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const ogImageUrl = `${appUrl}/api/og/duel?id=${duelId}`;
 
     return {
-      title: `⚔️ Duel: ${player1.username} vs ${player2.username} | 67Ranked`,
+      title: `⚔️ Duel: ${player1.username} vs ${player2.username} | 67 Royale`,
       description,
       openGraph: {
         title: `⚔️ Duel: ${player1.username} vs ${player2.username}`,
         description,
         url: `${appUrl}/duel/${duelId}/results`,
-        siteName: '67Ranked',
+        siteName: '67 Royale',
         type: 'website',
         images: [
           {
@@ -106,8 +106,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   } catch {
     return {
-      title: 'Duel Results | 67Ranked',
-      description: 'View duel results on 67Ranked',
+      title: 'Duel Results | 67 Royale',
+      description: 'View duel results on 67 Royale',
     };
   }
 }
