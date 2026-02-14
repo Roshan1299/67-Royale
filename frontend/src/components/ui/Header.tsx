@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import iconImage from '@/app/icon.png';
 
 interface HeaderProps {
   showNav?: boolean;
@@ -80,8 +82,14 @@ export function Header({ showNav = true }: HeaderProps) {
         {/* Logo */}
         <div className="flex items-center gap-2 sm:gap-3 flex-1">
           <Link href="/" className="flex items-center gap-1.5 group">
-            <div className="w-6 h-6 sm:w-7 sm:h-7 bg-accent-green rounded-md flex items-center justify-center group-hover:scale-105 transition-transform">
-              <span className="text-[10px] sm:text-xs font-black text-black">67</span>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md overflow-hidden group-hover:scale-105 transition-transform">
+              <Image
+                src={iconImage}
+                alt="67 Royale"
+                width={28}
+                height={28}
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="text-sm sm:text-base font-bold text-white tracking-tight">ROYALE</span>
           </Link>

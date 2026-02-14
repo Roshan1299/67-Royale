@@ -1,5 +1,8 @@
 'use client';
 
+import Image from 'next/image';
+import iconImage from '@/app/icon.png';
+
 interface StartScreenProps {
   onStart: () => void;
   error?: string | null;
@@ -43,8 +46,14 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
       <div className="text-center px-2 sm:px-4 animate-fade-in">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <div className="w-10 h-10 sm:w-14 sm:h-14 bg-accent-green rounded-lg sm:rounded-xl flex items-center justify-center green-glow">
-            <span className="text-lg sm:text-2xl font-black text-black">67</span>
+          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden green-glow">
+            <Image
+              src={iconImage}
+              alt="67 Royale"
+              width={56}
+              height={56}
+              className="w-full h-full object-cover"
+            />
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">ROYALE</h1>
         </div>
