@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
   showNav?: boolean;
@@ -12,6 +13,9 @@ export function Header({ showNav = true }: HeaderProps) {
   const pathname = usePathname();
   const isDuelPage = pathname?.startsWith('/duel');
   const [playerCount, setPlayerCount] = useState<number | null>(null);
+  const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -27,6 +31,25 @@ export function Header({ showNav = true }: HeaderProps) {
     };
     fetchStats();
   }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
+  const initials = (user?.displayName || 'A')
+    .split(' ')
+    .map((n) => n.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 py-2 sm:px-4 sm:py-2.5 bg-black/30 backdrop-blur-md border-b border-white/5">
@@ -67,13 +90,67 @@ export function Header({ showNav = true }: HeaderProps) {
           </div>
         )}
 
-        {/* Player count - Right side */}
-        <div className="flex-1 flex justify-end">
+        {/* Right side: player count + user avatar */}
+        <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3">
           {playerCount !== null && playerCount > 0 && (
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40 bg-black/50 px-3 py-1.5 rounded-full border border-white/10">
+            <div className="hidden sm:flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40 bg-black/50 px-3 py-1.5 rounded-full border border-white/10">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-green"></span>
               <span className="text-accent-green font-medium">{playerCount.toLocaleString()}</span>
               <span>users</span>
+            </div>
+          )}
+
+          {/* User avatar / menu */}
+          {user && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center justify-center rounded-full border border-white/10 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-accent-green/50 overflow-hidden"
+                style={{ width: 32, height: 32 }}
+                aria-label="User menu"
+              >
+                {user.photoURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || 'Avatar'}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-accent-green/20 flex items-center justify-center">
+                    <span className="text-accent-green font-bold text-xs">{initials}</span>
+                  </div>
+                )}
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-black/90 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl py-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                  {/* User info */}
+                  <div className="px-4 py-3 border-b border-white/10">
+                    <p className="text-white text-sm font-medium truncate">{user.displayName || 'Player'}</p>
+                    {user.email && (
+                      <p className="text-white/40 text-xs truncate mt-0.5">{user.email}</p>
+                    )}
+                  </div>
+
+                  {/* Logout */}
+                  <button
+                    onClick={async () => {
+                      setMenuOpen(false);
+                      await signOut();
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Log out
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
