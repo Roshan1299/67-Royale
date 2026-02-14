@@ -259,8 +259,19 @@ export class HandTracker {
   }
 
   resetRepCounter(): void {
-    this.detector?.reset();
-    this.isCalibrated = false;
+    // Reset only the count, not the entire detector state or phase
+    if (this.detector) {
+      this.detector.resetCount();
+
+      // Ensure detector is in active phase for gameplay
+      const phase = this.detector.getPhase();
+      if (phase !== 'active') {
+        // Transition to active if calibration was completed
+        if (this.isCalibrated || phase === 'calibrating') {
+          (this.detector as any).state.phase = 'active';
+        }
+      }
+    }
   }
 
   getRepCount(): number {

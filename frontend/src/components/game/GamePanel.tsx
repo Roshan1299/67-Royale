@@ -485,23 +485,16 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* State-based overlays */}
+        {/* State-based overlays - Only show UI overlays, not gameplay overlays */}
         {gameState === 'idle' && (
-          <StartScreen 
-            onStart={handleStart} 
+          <StartScreen
+            onStart={handleStart}
             error={cameraError}
             onRetry={handleStart}
           />
         )}
 
-        {gameState === 'calibrating' && calibrationTrackerRef.current && (
-          <CalibrationOverlay
-            progress={calibrationTrackerRef.current.getProgress()}
-            bothHandsDetected={trackingState?.bothHandsDetected || false}
-            backendWarning={trackingState?.backendWarning}
-            initState={trackingState?.initState}
-          />
-        )}
+        {/* CalibrationOverlay removed - canvas handles calibration display */}
 
         {gameState === 'selecting' && (
           <ModeSelector
@@ -514,15 +507,7 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
           <CountdownOverlay value={countdownValue} />
         )}
 
-        {gameState === 'playing' && (
-          <GameOverlay
-            repCount={displayRepCount}
-            timeRemaining={timeRemaining}
-            elapsedTime={elapsedTime}
-            is67RepsMode={is67RepsMode(duration)}
-            trackingLost={!trackingState?.bothHandsDetected}
-          />
-        )}
+        {/* GameOverlay removed - canvas handles rep count and timer display */}
 
         {gameState === 'ended' && (
           <EndScreen

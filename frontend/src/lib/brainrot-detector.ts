@@ -249,6 +249,13 @@ export class BrainrotDetector {
     this.state = this.createInitialState();
   }
 
+  resetCount(): void {
+    // Reset only the count and alternation state, keep phase and calibration
+    this.state.count = 0;
+    this.state.lastAlternationState = null;
+    this.state.isCurrentlyAlternating = false;
+  }
+
   getCount(): number {
     return this.state.count;
   }
@@ -496,7 +503,7 @@ export class BrainrotDetector {
   }
 
   private drawOverlay(): void {
-    const { phase } = this.state;
+    const { phase, count, isCurrentlyAlternating, bothHandsVisible, leftVelocity, rightVelocity } = this.state;
 
     if (phase === "idle") {
       this.drawIdleOverlay();
@@ -508,12 +515,8 @@ export class BrainrotDetector {
   }
 
   private drawIdleOverlay(): void {
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-    this.ctx.fillRect(10, 10, 250, 60);
-
-    this.ctx.font = "bold 18px Arial";
-    this.ctx.fillStyle = "#FFFFFF";
-    this.ctx.fillText("Press START to calibrate", 25, 45);
+    // Don't draw anything in idle - let React components handle UI
+    return;
   }
 
   private drawCalibrationOverlay(): void {
@@ -522,7 +525,7 @@ export class BrainrotDetector {
 
     // Background
     this.ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    this.ctx.fillRect(10, 10, 300, 100);
+    this.ctx.fillRect(10, 10, 300, 120);
 
     // Title
     this.ctx.font = "bold 20px Arial";
@@ -554,8 +557,18 @@ export class BrainrotDetector {
     const seconds = Math.ceil((1 - progress) * this.config.calibrationDuration / 1000);
     this.ctx.fillText(`${seconds}s`, 145, 89);
 
-    // REMOVED: Status text (show both hands, keep hands level, hold steady)
-    // The progress bar color (green/red) is enough visual feedback
+    // Status text (from original)
+    this.ctx.font = "13px Arial";
+    if (!bothHandsVisible) {
+      this.ctx.fillStyle = "#FF6666";
+      this.ctx.fillText("⚠ Show both hands", 25, 115);
+    } else if (!handsLevel) {
+      this.ctx.fillStyle = "#FFAA00";
+      this.ctx.fillText("⚠ Keep hands level", 25, 115);
+    } else {
+      this.ctx.fillStyle = "#00FF88";
+      this.ctx.fillText("✓ Hold steady...", 25, 115);
+    }
 
     // Draw baseline guide line
     if (bothHandsVisible && leftY !== null && rightY !== null) {
@@ -601,6 +614,10 @@ export class BrainrotDetector {
       this.ctx.fillText("Ready - start moving!", 25, 95);
     }
 
+    // Velocity indicators (up/down movement bars)
+    this.drawVelocityBar(150, 55, this.state.leftVelocity, "#FF6B6B");
+    this.drawVelocityBar(165, 55, this.state.rightVelocity, "#4ECDC4");
+
     // Draw baseline reference line (faint)
     if (calibration?.baselineY) {
       const baselinePixelY = calibration.baselineY * this.canvas.height;
@@ -620,6 +637,25 @@ export class BrainrotDetector {
       this.ctx.lineWidth = 6;
       this.ctx.strokeRect(3, 3, this.canvas.width - 6, this.canvas.height - 6);
     }
+  }
+
+  private drawVelocityBar(x: number, y: number, velocity: number, color: string): void {
+    const maxHeight = 30;
+    const height = Math.min(Math.abs(velocity) * 1500, maxHeight);
+    const direction = velocity > 0 ? 1 : -1;
+
+    this.ctx.fillStyle = color;
+    if (direction > 0) {
+      // Hand moving down (positive velocity)
+      this.ctx.fillRect(x, y, 10, height);
+    } else {
+      // Hand moving up (negative velocity)
+      this.ctx.fillRect(x, y - height, 10, height);
+    }
+
+    // Center line
+    this.ctx.fillStyle = "#FFFFFF";
+    this.ctx.fillRect(x, y - 1, 10, 2);
   }
 }
 
