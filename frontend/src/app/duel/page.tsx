@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { DURATION_6_7S, DURATION_20S, DURATION_67_REPS, MIN_CUSTOM_DURATION, MAX_CUSTOM_DURATION } from '@/types/game';
 import { Header } from '@/components/ui/Header';
 
@@ -42,28 +43,12 @@ const ArrowLeftIcon = () => (
 
 export default function DuelPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
+  const { user, getIdToken } = useAuth();
   const [duration, setDuration] = useState<number>(DURATION_6_7S);
   const [customSeconds, setCustomSeconds] = useState('10.0');
   const [showCustom, setShowCustom] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [playerCount, setPlayerCount] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setPlayerCount(data.totalGames);
-        }
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
-      }
-    };
-    fetchStats();
-  }, []);
 
   const handleDurationSelect = (ms: number) => {
     setDuration(ms);
@@ -86,20 +71,18 @@ export default function DuelPage() {
   };
 
   const handleCreate = async () => {
-    if (!username.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-
     setIsCreating(true);
     setError(null);
 
     try {
+      const idToken = await getIdToken();
       const response = await fetch('/api/duel/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
-          username: username.trim(),
           duration_ms: duration
         })
       });
@@ -148,18 +131,22 @@ export default function DuelPage() {
               Create a Duel
         </h1>
 
-            {/* Username */}
-            <div className="mb-5">
-              <label className="text-xs text-white/50 block mb-1.5">Your name</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter your name"
-            maxLength={20}
-                className="w-full rounded-lg px-4 py-3 text-white placeholder:text-white/30"
-          />
-        </div>
+            {/* User info */}
+            <div className="mb-5 flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+              {user?.photoURL && (
+                // eslint-disable-next-line @next/next/no-img-element -- dynamic external avatar URL
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'Avatar'}
+                  className="w-8 h-8 rounded-full"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+              <div>
+                <p className="text-xs text-white/50">Joining as</p>
+                <p className="text-sm font-medium text-white">{user?.displayName || 'Anonymous'}</p>
+              </div>
+            </div>
 
             {/* Mode Selection */}
             <div className="mb-5">
@@ -220,8 +207,8 @@ export default function DuelPage() {
             {/* Create Button */}
         <button
           onClick={handleCreate}
-          disabled={isCreating || !username.trim()}
-              className={`btn-primary w-full py-3.5 ${(isCreating || !username.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isCreating}
+              className={`btn-primary w-full py-3.5 ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {isCreating ? 'Creating...' : 'Create Duel'}
         </button>

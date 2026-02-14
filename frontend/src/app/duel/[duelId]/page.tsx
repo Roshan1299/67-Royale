@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
+import { getClientDb } from '@/lib/firebase/client';
+import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 import { HandTracker, RepCounter, CalibrationTracker } from '@/lib/hand-tracking';
 import { CalibrationOverlay } from '@/components/game/CalibrationOverlay';
 import { CountdownOverlay } from '@/components/game/CountdownOverlay';
@@ -73,6 +75,7 @@ export default function DuelPage() {
   const params = useParams();
   const router = useRouter();
   const duelId = params.duelId as string;
+  const { user, getIdToken } = useAuth();
 
   // Refs for game
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -90,7 +93,6 @@ export default function DuelPage() {
   const [duel, setDuel] = useState<DuelData | null>(null);
   const [players, setPlayers] = useState<DuelPlayer[]>([]);
   const [myPlayerKey, setMyPlayerKey] = useState<string | null>(null);
-  const [joinUsername, setJoinUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [countdownValue, setCountdownValue] = useState(3);
@@ -111,28 +113,11 @@ export default function DuelPage() {
   const gameEndedRef = useRef(false);
   const [containerSize, setContainerSize] = useState(400);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [totalPlayers, setTotalPlayers] = useState<number>(0);
 
   // Keep duel ref in sync
   useEffect(() => {
     duelDataRef.current = duel;
   }, [duel]);
-
-  // Fetch stats for player count
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setTotalPlayers(data.totalPlayers || 0);
-        }
-      } catch (err) {
-        console.error('Failed to fetch stats:', err);
-      }
-    };
-    fetchStats();
-  }, []);
 
   // Load duel data
   useEffect(() => {
@@ -204,38 +189,43 @@ export default function DuelPage() {
     };
 
     loadDuel();
-  }, [duelId]);
+  }, [duelId, router]);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates via Firestore onSnapshot
   useEffect(() => {
     if (!duelId) return;
+    const db = getClientDb();
 
-    const channel = supabase
-      .channel(`duel:${duelId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duels', filter: `id=eq.${duelId}` }, (payload) => {
-        const newDuel = payload.new as DuelData;
+    // Listen to duel document changes
+    const unsubDuel = onSnapshot(doc(db, 'duels', duelId), (snapshot) => {
+      if (snapshot.exists()) {
+        const newDuel = { id: snapshot.id, ...snapshot.data() } as DuelData;
         setDuel(newDuel);
-        
         if (newDuel.status === 'active' && pageState === 'lobby') {
           setPageState('calibrating');
         }
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_players', filter: `duel_id=eq.${duelId}` }, async () => {
-        // Fetch updated players
+      }
+    });
+
+    // Listen to duel_players changes
+    const playersQuery = query(collection(db, 'duel_players'), where('duel_id', '==', duelId));
+    const unsubPlayers = onSnapshot(playersQuery, async () => {
+      // Refetch via API for consistency
+      try {
         const res = await fetch(`/api/duel/${duelId}`);
         const data = await res.json();
         setPlayers(data.players);
-        
+
         // If we're in results and waiting for opponent, check if they've submitted
         if (pageState === 'results' && !result?.opponentScore) {
           const myPlayer = data.players.find((p: DuelPlayer) => p.player_key === myPlayerKey);
           const opponent = data.players.find((p: DuelPlayer) => p.player_key !== myPlayerKey);
-          
+
           if (myPlayer?.score !== null && opponent?.score !== null) {
             // Both have submitted - calculate result
             const is67Reps = duel && is67RepsMode(duel.duration_ms);
             let outcome: 'win' | 'lose' | 'tie' = 'tie';
-            
+
             if (is67Reps) {
               // Lower time wins
               if (myPlayer.score < opponent.score) outcome = 'win';
@@ -245,7 +235,7 @@ export default function DuelPage() {
               if (myPlayer.score > opponent.score) outcome = 'win';
               else if (myPlayer.score < opponent.score) outcome = 'lose';
             }
-            
+
             setResult({
               myScore: myPlayer.score,
               opponentScore: opponent.score,
@@ -255,31 +245,32 @@ export default function DuelPage() {
             });
           }
         }
-      })
-      .subscribe();
+      } catch (err) {
+        console.error('Failed to refetch players:', err);
+      }
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubDuel();
+      unsubPlayers();
     };
   }, [duelId, pageState, myPlayerKey, result, duel]);
 
   // Join duel
   const handleJoin = async () => {
-    if (!joinUsername.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-
     setIsJoining(true);
     setError(null);
 
     try {
+      const idToken = await getIdToken();
       const response = await fetch('/api/duel/join', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
-          duelId,
-          username: joinUsername.trim()
+          duelId
         })
       });
 
@@ -651,25 +642,35 @@ export default function DuelPage() {
             </p>
           </div>
 
-            <div className="mb-4">
-              <label className="text-white/50 text-xs mb-1.5 block">Your name</label>
-            <input
-              type="text"
-              value={joinUsername}
-              onChange={(e) => setJoinUsername(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={20}
-                className="w-full rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-white/30"
-            />
-          </div>
+            <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10 flex items-center gap-3">
+              {user?.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element -- dynamic external avatar URL
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'Avatar'}
+                  className="w-10 h-10 rounded-full border border-white/20"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-accent-green/20 border border-accent-green/30 flex items-center justify-center">
+                  <span className="text-accent-green font-bold text-sm">
+                    {(user?.displayName || 'A').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div>
+                <p className="text-white/40 text-xs">Joining as</p>
+                <p className="text-white text-sm font-medium">{user?.displayName || 'Anonymous'}</p>
+              </div>
+            </div>
 
             {error && <p className="text-red-400 text-xs text-center mb-3">{error}</p>}
 
           <button
             onClick={handleJoin}
-            disabled={isJoining || !joinUsername.trim()}
+            disabled={isJoining}
               className={`btn-primary w-full ${
-                (isJoining || !joinUsername.trim()) ? 'opacity-50 cursor-not-allowed' : ''
+                isJoining ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
             {isJoining ? 'Joining...' : 'Accept Duel'}
