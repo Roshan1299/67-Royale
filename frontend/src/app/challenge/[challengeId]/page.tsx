@@ -314,7 +314,7 @@ export default function ChallengePage() {
           <p className="text-white/70 mb-4">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 rounded-xl bg-accent-green text-black font-semibold"
+            className="px-6 py-3 rounded-xl bg-accent-blue text-black font-semibold"
           >
             Back to Home
           </button>
@@ -336,7 +336,7 @@ export default function ChallengePage() {
               <p className="text-white/60 mb-2">
                 <span className="text-white font-semibold">{challenger.username}</span> scored:
               </p>
-              <p className="text-5xl font-black text-accent-green">{challenger.score}</p>
+              <p className="text-5xl font-black text-accent-blue">{challenger.score}</p>
               <p className="text-white/50 text-sm">
                 in {challenge?.duration_ms ? `${(challenge.duration_ms / 1000).toFixed(1)}s` : '...'}
               </p>
@@ -355,7 +355,7 @@ export default function ChallengePage() {
 
           <button
             onClick={handlePlay}
-            className="w-full py-4 rounded-xl font-bold text-lg transition-all bg-accent-green text-black hover:bg-accent-green/90"
+            className="w-full py-4 rounded-xl font-bold text-lg transition-all bg-accent-blue text-black hover:bg-accent-blue/90"
           >
             {challenger ? 'Accept Challenge' : 'Play First'}
           </button>
@@ -404,7 +404,7 @@ export default function ChallengePage() {
           {opponentEntry && outcome ? (
             <>
               <div className={`text-4xl font-black mb-4 ${
-                outcome === 'win' ? 'text-accent-green' :
+                outcome === 'win' ? 'text-accent-blue' :
                 outcome === 'lose' ? 'text-red-400' : 'text-yellow-400'
               }`}>
                 {outcome === 'win' ? '🎉 YOU WIN!' :
@@ -428,7 +428,7 @@ export default function ChallengePage() {
               <div className="text-5xl mb-4">⏳</div>
               <h2 className="text-xl font-bold text-white mb-2">Waiting for opponent</h2>
               <p className="text-white/70 mb-4">
-                Your score: <span className="text-accent-green font-bold text-2xl">{finalScore}</span>
+                Your score: <span className="text-accent-blue font-bold text-2xl">{finalScore}</span>
               </p>
 
               <div className="mb-6">
@@ -442,7 +442,7 @@ export default function ChallengePage() {
                   />
                   <button
                     onClick={copyLink}
-                    className="px-4 py-2 rounded-xl bg-accent-green text-black font-semibold"
+                    className="px-4 py-2 rounded-xl bg-accent-blue text-black font-semibold"
                   >
                     {copied ? '✓' : 'Copy'}
                   </button>

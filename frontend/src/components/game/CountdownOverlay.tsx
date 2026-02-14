@@ -17,12 +17,12 @@ export function CountdownOverlay({ value }: CountdownOverlayProps) {
         <span 
           className={`
             text-6xl sm:text-8xl lg:text-9xl font-black
-            ${value === 0 ? 'text-accent-green' : 'text-white'}
+            ${value === 0 ? 'text-accent-blue' : 'text-white'}
           `}
           style={{
             fontStyle: 'italic',
             textShadow: value === 0 
-              ? '0 0 80px rgba(74, 222, 128, 0.6)' 
+              ? '0 0 80px rgba(96, 165, 250, 0.6)' 
               : '0 0 60px rgba(255, 255, 255, 0.3)'
           }}
         >
@@ -33,7 +33,7 @@ export function CountdownOverlay({ value }: CountdownOverlayProps) {
       {/* Progress bar */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5 sm:h-1 bg-white/10">
         <div 
-          className="h-full bg-accent-green transition-all duration-1000 ease-linear"
+          className="h-full bg-accent-blue transition-all duration-1000 ease-linear"
           style={{ width: `${((4 - value) / 4) * 100}%` }}
         />
       </div>

@@ -25,7 +25,7 @@ export default function TournamentPage() {
           {/* Coming Soon Card */}
           <div className="relative glass-panel rounded-2xl p-12 border border-white/10 overflow-hidden">
             {/* Animated background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-green/5 via-transparent to-blue-500/5 animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/5 via-transparent to-blue-500/5 animate-pulse"></div>
 
             {/* Lock background pattern */}
             <div className="absolute top-8 right-8 opacity-5">
@@ -40,7 +40,7 @@ export default function TournamentPage() {
               {/* Lock Icon */}
               <div className="flex justify-center mb-6">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-accent-green/20 blur-2xl rounded-full"></div>
+                  <div className="absolute inset-0 bg-accent-blue/20 blur-2xl rounded-full"></div>
                   <div className="relative text-white/40">
                     <LockIcon />
                   </div>
@@ -53,8 +53,8 @@ export default function TournamentPage() {
               </h1>
 
               {/* Coming Soon Badge */}
-              <div className="inline-block px-4 py-1.5 rounded-full bg-accent-green/10 border border-accent-green/20 mb-6">
-                <span className="text-accent-green text-sm font-bold uppercase tracking-wider">
+              <div className="inline-block px-4 py-1.5 rounded-full bg-accent-blue/10 border border-accent-blue/20 mb-6">
+                <span className="text-accent-blue text-sm font-bold uppercase tracking-wider">
                   Coming Soon
                 </span>
               </div>
@@ -67,19 +67,19 @@ export default function TournamentPage() {
               {/* Feature List */}
               <div className="space-y-2 text-left max-w-sm mx-auto">
                 <div className="flex items-center gap-3 text-white/40 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-green/40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40"></div>
                   <span>Single & Double Elimination Brackets</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/40 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-green/40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40"></div>
                   <span>Scheduled Events & Championships</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/40 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-green/40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40"></div>
                   <span>Spectator Mode & Replays</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/40 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-green/40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40"></div>
                   <span>Exclusive Tournament Rewards</span>
                 </div>
               </div>

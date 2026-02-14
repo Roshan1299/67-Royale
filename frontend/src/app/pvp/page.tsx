@@ -227,7 +227,7 @@ export default function PvpPage() {
                             isSelected ? 'card-selected' : 'card'
                           }`}
                         >
-                          <div className={`w-full flex justify-center mb-1.5 ${isSelected ? 'text-accent-green' : 'text-white/40'}`}>
+                          <div className={`w-full flex justify-center mb-1.5 ${isSelected ? 'text-accent-blue' : 'text-white/40'}`}>
                             <Icon />
                           </div>
                           <p className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-white/70'}`}>{title}</p>
@@ -259,11 +259,11 @@ export default function PvpPage() {
               <div className="text-center py-8">
                 {/* Animated search indicator */}
                 <div className="relative w-20 h-20 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full border-2 border-accent-green/20"></div>
-                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent-green animate-spin"></div>
-                  <div className="absolute inset-3 rounded-full border-2 border-transparent border-b-accent-green/60 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-accent-blue/20"></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent-blue animate-spin"></div>
+                  <div className="absolute inset-3 rounded-full border-2 border-transparent border-b-accent-blue/60 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-accent-green text-xs font-mono">{formatSearchTime(searchTime)}</span>
+                    <span className="text-accent-blue text-xs font-mono">{formatSearchTime(searchTime)}</span>
                   </div>
                 </div>
 

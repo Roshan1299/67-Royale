@@ -46,7 +46,7 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
       <div className="text-center px-2 sm:px-4 animate-fade-in">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden green-glow">
+          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden blue-glow">
             <Image
               src={iconImage}
               alt="67 Royale"

@@ -93,7 +93,7 @@ export function LeaderboardPanel({ refreshTrigger, onMinimize, showMinimizeButto
             className={`
                 flex-1 py-0.5 sm:py-1 px-1.5 sm:px-2 rounded text-[10px] sm:text-xs font-semibold transition-all
                 ${selectedDuration === id
-                ? 'bg-accent-green text-black'
+                ? 'bg-accent-blue text-black'
                   : 'text-white/50 hover:text-white'
               }
             `}
@@ -111,7 +111,7 @@ export function LeaderboardPanel({ refreshTrigger, onMinimize, showMinimizeButto
         ) : error ? (
           <div className="p-3 sm:p-4 text-center">
             <p className="text-red-400 text-[10px] sm:text-xs mb-1.5 sm:mb-2">{error}</p>
-            <button onClick={refresh} className="text-accent-green text-[10px] sm:text-xs hover:underline">
+            <button onClick={refresh} className="text-accent-blue text-[10px] sm:text-xs hover:underline">
               Try again
             </button>
           </div>
@@ -191,7 +191,7 @@ function LeaderboardRow({ rank, username, score, isTop3, index, is67RepsMode = f
 
       {/* Score */}
       <div className="flex-shrink-0 text-right">
-        <span className={`text-[10px] sm:text-xs font-bold tabular-nums ${isTop3 ? 'text-accent-green' : 'text-white/80'}`}>
+        <span className={`text-[10px] sm:text-xs font-bold tabular-nums ${isTop3 ? 'text-accent-blue' : 'text-white/80'}`}>
           {is67RepsMode ? formatTime(score) : score}
         </span>
         {is67RepsMode && <span className="text-white/30 text-[9px] sm:text-[10px] ml-0.5">s</span>}

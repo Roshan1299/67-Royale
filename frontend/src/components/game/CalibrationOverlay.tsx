@@ -10,7 +10,7 @@ interface CalibrationOverlayProps {
 }
 
 const HandIcon = ({ detected = false }: { detected?: boolean }) => (
-  <svg className={`w-6 h-6 sm:w-8 sm:h-8 ${detected ? 'text-accent-green' : 'text-white/30'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg className={`w-6 h-6 sm:w-8 sm:h-8 ${detected ? 'text-accent-blue' : 'text-white/30'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M6.5 12V9.5a1 1 0 112 0V12m0-4V5.5a1 1 0 112 0v5m0-3.5V4a1 1 0 012 0v8m0-4.5v-1a1 1 0 112 0v7.5a6 6 0 01-6 6h-2a6 6 0 01-6-6v-3a1 1 0 012 0V12" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -22,7 +22,7 @@ const WarningIcon = () => (
 );
 
 const LoadingSpinner = () => (
-  <svg className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-accent-green" viewBox="0 0 24 24" fill="none">
+  <svg className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-accent-blue" viewBox="0 0 24 24" fill="none">
     <circle 
       className="opacity-25" 
       cx="12" 
@@ -68,7 +68,7 @@ export function CalibrationOverlay({ progress, bothHandsDetected, backendWarning
           {/* Indeterminate progress bar */}
           <div className="w-full h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden mt-4">
             <div 
-              className="h-full bg-accent-green rounded-full animate-pulse"
+              className="h-full bg-accent-blue rounded-full animate-pulse"
               style={{ width: initState === 'warming_up' ? '80%' : '40%' }}
             />
           </div>
@@ -82,10 +82,10 @@ export function CalibrationOverlay({ progress, bothHandsDetected, backendWarning
       <div className="glass-panel px-4 sm:px-6 py-4 sm:py-6 rounded-lg sm:rounded-xl text-center max-w-[260px] sm:max-w-xs animate-fade-in">
         {/* Hand icons */}
         <div className="flex justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-          <div className={`p-2 sm:p-2.5 rounded-md sm:rounded-lg ${bothHandsDetected ? 'bg-accent-green/10 border border-accent-green/30' : 'bg-white/5 border border-white/10'}`}>
+          <div className={`p-2 sm:p-2.5 rounded-md sm:rounded-lg ${bothHandsDetected ? 'bg-accent-blue/10 border border-accent-blue/30' : 'bg-white/5 border border-white/10'}`}>
             <HandIcon detected={bothHandsDetected} />
           </div>
-          <div className={`p-2 sm:p-2.5 rounded-md sm:rounded-lg ${bothHandsDetected ? 'bg-accent-green/10 border border-accent-green/30' : 'bg-white/5 border border-white/10'}`}>
+          <div className={`p-2 sm:p-2.5 rounded-md sm:rounded-lg ${bothHandsDetected ? 'bg-accent-blue/10 border border-accent-blue/30' : 'bg-white/5 border border-white/10'}`}>
             <HandIcon detected={bothHandsDetected} />
           </div>
         </div>
@@ -111,7 +111,7 @@ export function CalibrationOverlay({ progress, bothHandsDetected, backendWarning
         {/* Progress bar */}
         <div className="w-full h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-accent-green rounded-full transition-all duration-150"
+            className="h-full bg-accent-blue rounded-full transition-all duration-150"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

@@ -156,7 +156,7 @@ export default function DuelPage() {
               onClick={() => { setActiveTab('create'); setError(null); }}
               className={`flex-1 py-3 text-sm font-semibold transition-all ${
                 activeTab === 'create'
-                  ? 'text-accent-green border-b-2 border-accent-green'
+                  ? 'text-accent-blue border-b-2 border-accent-blue'
                   : 'text-white/40 hover:text-white/60'
               }`}
             >
@@ -166,7 +166,7 @@ export default function DuelPage() {
               onClick={() => { setActiveTab('join'); setError(null); }}
               className={`flex-1 py-3 text-sm font-semibold transition-all ${
                 activeTab === 'join'
-                  ? 'text-accent-green border-b-2 border-accent-green'
+                  ? 'text-accent-blue border-b-2 border-accent-blue'
                   : 'text-white/40 hover:text-white/60'
               }`}
             >
@@ -209,7 +209,7 @@ export default function DuelPage() {
                             isSelected ? 'card-selected' : 'card'
                           }`}
                         >
-                          <div className={`w-full flex justify-center mb-1.5 ${isSelected ? 'text-accent-green' : 'text-white/40'}`}>
+                          <div className={`w-full flex justify-center mb-1.5 ${isSelected ? 'text-accent-blue' : 'text-white/40'}`}>
                             <Icon />
                           </div>
                           <p className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-white/70'}`}>{title}</p>
@@ -223,7 +223,7 @@ export default function DuelPage() {
                         showCustom ? 'card-selected' : 'card'
                       }`}
                     >
-                      <div className={`w-full flex justify-center mb-1.5 ${showCustom ? 'text-accent-green' : 'text-white/40'}`}>
+                      <div className={`w-full flex justify-center mb-1.5 ${showCustom ? 'text-accent-blue' : 'text-white/40'}`}>
                         <CustomIcon />
                       </div>
                       <p className={`text-base font-bold ${showCustom ? 'text-white' : 'text-white/70'}`}>Custom</p>
@@ -279,7 +279,7 @@ export default function DuelPage() {
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
                   placeholder="A3K9B2"
                   maxLength={6}
-                  className="w-full rounded-xl px-4 py-4 text-white text-center text-3xl font-mono tracking-[0.3em] bg-white/5 border border-white/10 focus:border-accent-green/50 focus:outline-none transition-colors placeholder:text-white/20"
+                  className="w-full rounded-xl px-4 py-4 text-white text-center text-3xl font-mono tracking-[0.3em] bg-white/5 border border-white/10 focus:border-accent-blue/50 focus:outline-none transition-colors placeholder:text-white/20"
                 />
 
                 {error && (
