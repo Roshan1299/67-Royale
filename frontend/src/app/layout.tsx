@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { LegalFooter } from "@/components/ui/LegalFooter";
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
           {children}
           <LegalFooter />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
