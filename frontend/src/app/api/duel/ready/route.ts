@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,17 +19,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ready must be a boolean' }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Update player ready status
-    const { error: updateError } = await supabase
-      .from('duel_players')
-      .update({ ready })
-      .eq('duel_id', duelId)
-      .eq('player_key', player_key);
+    try {
+      const snap = await db.collection('duel_players')
+        .where('duel_id', '==', duelId)
+        .where('player_key', '==', player_key)
+        .get();
 
-    if (updateError) {
-      console.error('Ready update error:', updateError);
+      if (!snap.empty) {
+        await snap.docs[0].ref.update({ ready });
+      }
+    } catch (err) {
+      console.error('Ready update error:', err);
       return NextResponse.json({ error: 'Failed to update ready status' }, { status: 500 });
     }
 

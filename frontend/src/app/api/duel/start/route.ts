@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,34 +10,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'duelId is required' }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Check duel exists
-    const { data: duel, error: duelError } = await supabase
-      .from('duels')
-      .select('id, status, duration_ms')
-      .eq('id', duelId)
-      .single();
-
-    if (duelError || !duel) {
+    const duelDoc = await db.collection('duels').doc(duelId).get();
+    if (!duelDoc.exists) {
       return NextResponse.json({ error: 'Duel not found' }, { status: 404 });
     }
+
+    const duel = { id: duelDoc.id, ...duelDoc.data() } as { id: string; status: string; duration_ms: number };
 
     if (duel.status !== 'waiting') {
       return NextResponse.json({ error: 'Duel cannot be started' }, { status: 400 });
     }
 
     // Check both players are ready
-    const { data: players, error: playersError } = await supabase
-      .from('duel_players')
-      .select('id, ready')
-      .eq('duel_id', duelId);
+    const playersSnap = await db.collection('duel_players')
+      .where('duel_id', '==', duelId)
+      .get();
 
-    if (playersError) {
-      return NextResponse.json({ error: 'Failed to check players' }, { status: 500 });
-    }
+    const players = playersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Array<{ id: string; ready: boolean }>;
 
-    if (!players || players.length !== 2) {
+    if (players.length !== 2) {
       return NextResponse.json({ error: 'Need exactly 2 players to start' }, { status: 400 });
     }
 
@@ -49,16 +43,13 @@ export async function POST(request: NextRequest) {
     const startAt = new Date(Date.now() + 5000);
 
     // Update duel status
-    const { error: updateError } = await supabase
-      .from('duels')
-      .update({
+    try {
+      await db.collection('duels').doc(duelId).update({
         status: 'active',
         start_at: startAt.toISOString()
-      })
-      .eq('id', duelId);
-
-    if (updateError) {
-      console.error('Start update error:', updateError);
+      });
+    } catch (err) {
+      console.error('Start update error:', err);
       return NextResponse.json({ error: 'Failed to start duel' }, { status: 500 });
     }
 

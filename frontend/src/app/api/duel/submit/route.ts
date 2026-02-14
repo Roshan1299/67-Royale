@@ -1,64 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 import { verifySessionToken, validateSubmissionTiming } from '@/lib/jwt';
 import { checkRateLimit, createRateLimitKey } from '@/lib/rate-limit';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
 
 // Helper to calculate rank stats for a score
 async function calculateRankStats(
-  supabase: ReturnType<typeof createServerClient>,
   duration_ms: number,
   score: number,
   is67Reps: boolean
 ) {
+  const db = getDb();
+
   // Get total count for all-time
-  const { count: totalCount } = await supabase
-    .from('scores')
-    .select('*', { count: 'exact', head: true })
-    .eq('duration_ms', duration_ms);
+  const totalSnap = await db.collection('scores')
+    .where('duration_ms', '==', duration_ms)
+    .count().get();
+  const totalCount = totalSnap.data().count;
 
   // Get all-time rank (count of better scores + 1)
   let allTimeRank = 1;
   if (is67Reps) {
-    const { count: betterScores } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true })
-      .eq('duration_ms', duration_ms)
-      .lt('score', score);
-    allTimeRank = (betterScores || 0) + 1;
+    const betterSnap = await db.collection('scores')
+      .where('duration_ms', '==', duration_ms)
+      .where('score', '<', score)
+      .count().get();
+    allTimeRank = betterSnap.data().count + 1;
   } else {
-    const { count: betterScores } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true })
-      .eq('duration_ms', duration_ms)
-      .gt('score', score);
-    allTimeRank = (betterScores || 0) + 1;
+    const betterSnap = await db.collection('scores')
+      .where('duration_ms', '==', duration_ms)
+      .where('score', '>', score)
+      .count().get();
+    allTimeRank = betterSnap.data().count + 1;
   }
 
   // Get daily rank (past 24 hours)
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   let dailyRank = 1;
   if (is67Reps) {
-    const { count: betterDailyScores } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true })
-      .eq('duration_ms', duration_ms)
-      .gte('created_at', twentyFourHoursAgo)
-      .lt('score', score);
-    dailyRank = (betterDailyScores || 0) + 1;
+    const betterDailySnap = await db.collection('scores')
+      .where('duration_ms', '==', duration_ms)
+      .where('created_at', '>=', twentyFourHoursAgo)
+      .where('score', '<', score)
+      .count().get();
+    dailyRank = betterDailySnap.data().count + 1;
   } else {
-    const { count: betterDailyScores } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true })
-      .eq('duration_ms', duration_ms)
-      .gte('created_at', twentyFourHoursAgo)
-      .gt('score', score);
-    dailyRank = (betterDailyScores || 0) + 1;
+    const betterDailySnap = await db.collection('scores')
+      .where('duration_ms', '==', duration_ms)
+      .where('created_at', '>=', twentyFourHoursAgo)
+      .where('score', '>', score)
+      .count().get();
+    dailyRank = betterDailySnap.data().count + 1;
   }
 
   const percentile = totalCount ? Math.round((allTimeRank / totalCount) * 100) : 1;
 
-  return { dailyRank, allTimeRank, percentile, totalCount: totalCount || 0 };
+  return { dailyRank, allTimeRank, percentile, totalCount };
 }
 
 export async function POST(request: NextRequest) {
@@ -108,48 +105,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Update player score
-    const { error: updateError } = await supabase
-      .from('duel_players')
-      .update({
-        score,
-        submitted_at: new Date().toISOString()
-      })
-      .eq('duel_id', payload.duel_id)
-      .eq('player_key', payload.player_key);
+    try {
+      const playerSnap = await db.collection('duel_players')
+        .where('duel_id', '==', payload.duel_id)
+        .where('player_key', '==', payload.player_key)
+        .get();
 
-    if (updateError) {
-      console.error('Score update error:', updateError);
+      if (!playerSnap.empty) {
+        await playerSnap.docs[0].ref.update({
+          score,
+          submitted_at: new Date().toISOString()
+        });
+      }
+    } catch (err) {
+      console.error('Score update error:', err);
       return NextResponse.json({ error: 'Failed to submit score' }, { status: 500 });
     }
 
     // Check if both players have submitted
-    const { data: players, error: playersError } = await supabase
-      .from('duel_players')
-      .select('username, score, player_key')
-      .eq('duel_id', payload.duel_id);
+    const playersSnap = await db.collection('duel_players')
+      .where('duel_id', '==', payload.duel_id)
+      .get();
 
-    if (playersError) {
-      return NextResponse.json({ error: 'Failed to check results' }, { status: 500 });
-    }
+    const players = playersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Array<{
+      id: string;
+      username: string;
+      score: number | null;
+      player_key: string;
+      uid?: string;
+      photoURL?: string | null;
+    }>;
 
-    const allSubmitted = players?.every(p => p.score !== null);
+    const allSubmitted = players.every(p => p.score !== null && p.score !== undefined);
 
-    if (allSubmitted && players) {
+    if (allSubmitted && players.length > 0) {
       // Mark duel as complete
-      await supabase
-        .from('duels')
-        .update({ status: 'complete' })
-        .eq('id', payload.duel_id);
+      await db.collection('duels').doc(payload.duel_id).update({ status: 'complete' });
 
       // Get duel info to check mode
-      const { data: duel } = await supabase
-        .from('duels')
-        .select('duration_ms')
-        .eq('id', payload.duel_id)
-        .single();
+      const duelDoc = await db.collection('duels').doc(payload.duel_id).get();
+      const duel = duelDoc.exists ? (duelDoc.data() as { duration_ms: number }) : null;
 
       const is67Reps = duel && is67RepsMode(duel.duration_ms);
 
@@ -182,14 +180,28 @@ export async function POST(request: NextRequest) {
 
       if (isStandardDuration && duel && myPlayer && opponent && myPlayer.score !== null && opponent.score !== null) {
         // Insert both players' scores into the leaderboard
-        await supabase.from('scores').insert([
-          { username: myPlayer.username, score: myPlayer.score, duration_ms: duel.duration_ms },
-          { username: opponent.username, score: opponent.score, duration_ms: duel.duration_ms }
-        ]);
+        const batch = db.batch();
+        batch.set(db.collection('scores').doc(), {
+          username: myPlayer.username,
+          score: myPlayer.score,
+          duration_ms: duel.duration_ms,
+          uid: myPlayer.uid || null,
+          photoURL: myPlayer.photoURL || null,
+          created_at: new Date().toISOString()
+        });
+        batch.set(db.collection('scores').doc(), {
+          username: opponent.username,
+          score: opponent.score,
+          duration_ms: duel.duration_ms,
+          uid: opponent.uid || null,
+          photoURL: opponent.photoURL || null,
+          created_at: new Date().toISOString()
+        });
+        await batch.commit();
 
         // Calculate rank stats for both players
-        myRankStats = await calculateRankStats(supabase, duel.duration_ms, myPlayer.score, !!is67Reps);
-        opponentRankStats = await calculateRankStats(supabase, duel.duration_ms, opponent.score, !!is67Reps);
+        myRankStats = await calculateRankStats(duel.duration_ms, myPlayer.score, !!is67Reps);
+        opponentRankStats = await calculateRankStats(duel.duration_ms, opponent.score, !!is67Reps);
       }
 
       return NextResponse.json({

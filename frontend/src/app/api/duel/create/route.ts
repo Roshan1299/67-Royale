@@ -1,25 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
-import { validateUsername } from '@/lib/profanity';
-import { MIN_CUSTOM_DURATION, MAX_CUSTOM_DURATION, DURATION_67_REPS, is67RepsMode } from '@/types/game';
+import { getDb, verifyAuthToken } from '@/lib/firebase/server';
+import { MIN_CUSTOM_DURATION, MAX_CUSTOM_DURATION, is67RepsMode } from '@/types/game';
 import { randomUUID } from 'crypto';
 
 const DUEL_EXPIRY_MINUTES = 15;
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Firebase auth token
+    const user = await verifyAuthToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { username, duration_ms } = body;
-
-    // Validate username
-    if (!username || typeof username !== 'string') {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
-    }
-
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.valid) {
-      return NextResponse.json({ error: usernameValidation.reason }, { status: 400 });
-    }
+    const { duration_ms } = body;
 
     // Validate duration
     if (typeof duration_ms !== 'number') {
@@ -35,47 +30,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
-    
+    const db = getDb();
+
     // Create duel
     const expiresAt = new Date(Date.now() + DUEL_EXPIRY_MINUTES * 60 * 1000);
     const playerKey = randomUUID();
 
-    const { data: duel, error: duelError } = await supabase
-      .from('duels')
-      .insert({
+    let duelId: string;
+    try {
+      const duelRef = await db.collection('duels').add({
         duration_ms,
         status: 'waiting',
-        expires_at: expiresAt.toISOString()
-      })
-      .select('id')
-      .single();
-
-    if (duelError) {
-      console.error('Duel creation error:', duelError);
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString()
+      });
+      duelId = duelRef.id;
+    } catch (err) {
+      console.error('Duel creation error:', err);
       return NextResponse.json({ error: 'Failed to create duel' }, { status: 500 });
     }
 
     // Add player A
-    const { error: playerError } = await supabase
-      .from('duel_players')
-      .insert({
-        duel_id: duel.id,
+    try {
+      await db.collection('duel_players').add({
+        duel_id: duelId,
         player_key: playerKey,
-        username,
+        username: user.displayName,
+        uid: user.uid,
+        photoURL: user.photoURL,
         ready: false
       });
-
-    if (playerError) {
-      console.error('Player creation error:', playerError);
+    } catch (err) {
+      console.error('Player creation error:', err);
       return NextResponse.json({ error: 'Failed to create player' }, { status: 500 });
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const shareUrl = `${appUrl}/duel/${duel.id}`;
+    const shareUrl = `${appUrl}/duel/${duelId}`;
 
     return NextResponse.json({
-      duelId: duel.id,
+      duelId,
       player_key: playerKey,
       shareUrl
     });

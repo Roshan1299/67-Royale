@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 import { createSessionToken } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
@@ -15,30 +15,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'player_key is required' }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Verify player belongs to duel
-    const { data: player, error: playerError } = await supabase
-      .from('duel_players')
-      .select('id')
-      .eq('duel_id', duelId)
-      .eq('player_key', player_key)
-      .single();
+    const playerSnap = await db.collection('duel_players')
+      .where('duel_id', '==', duelId)
+      .where('player_key', '==', player_key)
+      .get();
 
-    if (playerError || !player) {
+    if (playerSnap.empty) {
       return NextResponse.json({ error: 'Invalid player' }, { status: 403 });
     }
 
     // Get duel details
-    const { data: duel, error: duelError } = await supabase
-      .from('duels')
-      .select('id, duration_ms, status, start_at')
-      .eq('id', duelId)
-      .single();
-
-    if (duelError || !duel) {
+    const duelDoc = await db.collection('duels').doc(duelId).get();
+    if (!duelDoc.exists) {
       return NextResponse.json({ error: 'Duel not found' }, { status: 404 });
     }
+
+    const duel = { id: duelDoc.id, ...duelDoc.data() } as {
+      id: string;
+      duration_ms: number;
+      status: string;
+      start_at: string | null;
+    };
 
     if (duel.status !== 'active') {
       return NextResponse.json({ error: 'Duel is not active' }, { status: 400 });
