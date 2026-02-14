@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 
 export async function GET(
   request: NextRequest,
@@ -12,32 +12,37 @@ export async function GET(
       return NextResponse.json({ error: 'challengeId is required' }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Get challenge details
-    const { data: challengeData, error: challengeError } = await supabase
-      .from('challenges')
-      .select('id, duration_ms, status, expires_at')
-      .eq('id', challengeId)
-      .single();
+    const challengeDoc = await db.collection('challenges').doc(challengeId).get();
 
-    if (challengeError || !challengeData) {
+    if (!challengeDoc.exists) {
       return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
     }
 
-    const challenge = challengeData as { id: string; duration_ms: number; status: string; expires_at: string };
+    const challenge = { id: challengeDoc.id, ...challengeDoc.data() } as {
+      id: string;
+      duration_ms: number;
+      status: string;
+      expires_at: string;
+    };
 
     // Get entries
-    const { data: entriesData, error: entriesError } = await supabase
-      .from('challenge_entries')
-      .select('player_key, username, score, submitted_at')
-      .eq('challenge_id', challengeId);
+    const entriesSnap = await db
+      .collection('challenge_entries')
+      .where('challenge_id', '==', challengeId)
+      .get();
 
-    if (entriesError) {
-      return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });
-    }
-
-    const entries = entriesData as Array<{ player_key: string; username: string; score: number; submitted_at: string }> | null;
+    const entries = entriesSnap.docs.map(d => {
+      const data = d.data() as { player_key: string; username: string; score: number; submitted_at?: string };
+      return {
+        player_key: data.player_key,
+        username: data.username,
+        score: data.score,
+        submitted_at: data.submitted_at,
+      };
+    });
 
     return NextResponse.json({
       challenge: {
@@ -46,12 +51,12 @@ export async function GET(
         status: challenge.status,
         expires_at: new Date(challenge.expires_at).getTime()
       },
-      entries: entries?.map(e => ({
+      entries: entries.map(e => ({
         player_key: e.player_key,
         username: e.username,
         score: e.score,
         submitted_at: e.submitted_at
-      })) || []
+      }))
     });
   } catch (error) {
     console.error('Challenge fetch error:', error);

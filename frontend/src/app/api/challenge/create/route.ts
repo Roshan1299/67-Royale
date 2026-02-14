@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
-import { validateUsername } from '@/lib/profanity';
+import { getDb, verifyAuthToken } from '@/lib/firebase/server';
 import { MIN_CUSTOM_DURATION, MAX_CUSTOM_DURATION } from '@/types/game';
 import { randomUUID } from 'crypto';
 
@@ -8,18 +7,14 @@ const CHALLENGE_EXPIRY_DAYS = 7;
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Firebase auth token for username/uid
+    const user = await verifyAuthToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { username, duration_ms } = body;
-
-    // Validate username
-    if (!username || typeof username !== 'string') {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
-    }
-
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.valid) {
-      return NextResponse.json({ error: usernameValidation.reason }, { status: 400 });
-    }
+    const { duration_ms } = body;
 
     // Validate duration
     if (typeof duration_ms !== 'number') {
@@ -33,32 +28,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
     
     // Create challenge
     const expiresAt = new Date(Date.now() + CHALLENGE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
     const playerKey = randomUUID();
 
-    const { data: challenge, error: challengeError } = await supabase
-      .from('challenges')
-      .insert({
-        duration_ms,
-        status: 'pending',
-        expires_at: expiresAt.toISOString()
-      })
-      .select('id')
-      .single();
-
-    if (challengeError) {
-      console.error('Challenge creation error:', challengeError);
-      return NextResponse.json({ error: 'Failed to create challenge' }, { status: 500 });
-    }
+    const docRef = await db.collection('challenges').add({
+      duration_ms,
+      status: 'pending',
+      expires_at: expiresAt.toISOString(),
+    });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const shareUrl = `${appUrl}/challenge/${challenge.id}`;
+    const shareUrl = `${appUrl}/challenge/${docRef.id}`;
 
     return NextResponse.json({
-      challengeId: challenge.id,
+      challengeId: docRef.id,
       player_key: playerKey,
       shareUrl
     });
