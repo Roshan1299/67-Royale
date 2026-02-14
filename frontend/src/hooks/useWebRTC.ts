@@ -12,12 +12,35 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 
-const ICE_SERVERS: RTCConfiguration = {
-  iceServers: [
+function getIceConfig(): RTCConfiguration {
+  const iceServers: RTCIceServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+  ];
+
+  // Add TURN servers from environment variables if configured
+  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
+  const turnUsername = process.env.NEXT_PUBLIC_TURN_USERNAME;
+  const turnCredential = process.env.NEXT_PUBLIC_TURN_CREDENTIAL;
+
+  if (turnUrl && turnUsername && turnCredential) {
+    // Support multiple TURN URLs separated by commas
+    const turnUrls = turnUrl.split(',').map(u => u.trim());
+    iceServers.push({
+      urls: turnUrls,
+      username: turnUsername,
+      credential: turnCredential,
+    });
+    console.log('[WebRTC] TURN servers configured:', turnUrls.length, 'URLs');
+  } else {
+    console.warn('[WebRTC] No TURN servers configured. P2P may fail on restrictive networks. Set NEXT_PUBLIC_TURN_URL, NEXT_PUBLIC_TURN_USERNAME, NEXT_PUBLIC_TURN_CREDENTIAL env vars.');
+  }
+
+  return { iceServers, iceCandidatePoolSize: 10 };
+}
 
 interface UseWebRTCReturn {
   remoteStream: MediaStream | null;
@@ -108,7 +131,7 @@ export function useWebRTC(
     const duelRef = doc(db, 'duels', duelId);
 
     // Create peer connection
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const pc = new RTCPeerConnection(getIceConfig());
     pcRef.current = pc;
 
     // Remote stream container (created lazily on first track)

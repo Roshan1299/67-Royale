@@ -112,11 +112,16 @@ export async function GET(
     if (duel.status === 'complete' && isStandardDuration) {
       for (const player of players) {
         if (player.score !== null) {
-          rankStats[player.player_key] = await calculateRankStats(
-            duel.duration_ms,
-            player.score,
-            is67Reps
-          );
+          try {
+            rankStats[player.player_key] = await calculateRankStats(
+              duel.duration_ms,
+              player.score,
+              is67Reps
+            );
+          } catch (err) {
+            console.error('Rank stats calculation failed (missing index?):', err);
+            // Don't crash the API - just skip rank stats for this player
+          }
         }
       }
     }

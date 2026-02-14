@@ -108,6 +108,7 @@ export default function DuelPage() {
   const [displayRepCount, setDisplayRepCount] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const gameEndedRef = useRef(false);
+  const submitCalledRef = useRef(false);
   const [containerSize, setContainerSize] = useState(400);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -380,6 +381,10 @@ export default function DuelPage() {
 
   // End game callback
   const endGame = useCallback(async (finalElapsedMs?: number) => {
+    // Prevent double submission
+    if (submitCalledRef.current) return;
+    submitCalledRef.current = true;
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;

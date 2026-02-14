@@ -199,9 +199,17 @@ export async function POST(request: NextRequest) {
         });
         await batch.commit();
 
-        // Calculate rank stats for both players
-        myRankStats = await calculateRankStats(duel.duration_ms, myPlayer.score, !!is67Reps);
-        opponentRankStats = await calculateRankStats(duel.duration_ms, opponent.score, !!is67Reps);
+        // Calculate rank stats for both players (may fail if indexes not created yet)
+        try {
+          myRankStats = await calculateRankStats(duel.duration_ms, myPlayer.score, !!is67Reps);
+        } catch (err) {
+          console.error('My rank stats failed (missing index?):', err);
+        }
+        try {
+          opponentRankStats = await calculateRankStats(duel.duration_ms, opponent.score, !!is67Reps);
+        } catch (err) {
+          console.error('Opponent rank stats failed (missing index?):', err);
+        }
       }
 
       return NextResponse.json({
