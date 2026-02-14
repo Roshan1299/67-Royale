@@ -1,0 +1,81 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Duels collection
+    match /duels/{duelId} {
+      // Anyone can read duels
+      allow read: if true;
+
+      // Authenticated users can create/update duels
+      allow create, update: if request.auth != null;
+
+      // WebRTC signaling subcollections - allow all reads/writes for P2P connection
+      match /webrtc/{doc} {
+        allow read, write: if true;
+      }
+
+      match /hostCandidates/{doc} {
+        allow read, write: if true;
+      }
+
+      match /guestCandidates/{doc} {
+        allow read, write: if true;
+      }
+    }
+
+    // Duel players collection
+    match /duel_players/{playerId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Authenticated users can create/update their own player entry
+      allow create, update: if request.auth != null;
+    }
+
+    // Scores collection (leaderboard)
+    match /scores/{scoreId} {
+      // Anyone can read scores
+      allow read: if true;
+
+      // No direct writes - only via server API
+      allow write: if false;
+    }
+
+    // Challenges collection
+    match /challenges/{challengeId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Authenticated users can create
+      allow create: if request.auth != null;
+
+      // No updates/deletes
+      allow update, delete: if false;
+    }
+
+    // Challenge entries collection
+    match /challenge_entries/{entryId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Authenticated users can create
+      allow create: if request.auth != null;
+
+      // No updates/deletes
+      allow update, delete: if false;
+    }
+
+    // Matchmaking queue collection
+    match /matchmaking_queue/{queueId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // User stats collection (trophies)
+    match /user_stats/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

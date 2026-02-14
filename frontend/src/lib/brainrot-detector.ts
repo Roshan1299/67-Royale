@@ -320,6 +320,11 @@ export class BrainrotDetector {
   private onResults(results: Results): void {
     this.ctx.save();
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Flip canvas horizontally for mirror effect
+    this.ctx.translate(this.canvas.width, 0);
+    this.ctx.scale(-1, 1);
+
     this.ctx.drawImage(results.image, 0, 0, this.canvas.width, this.canvas.height);
 
     let rawLeftY: number | null = null;
