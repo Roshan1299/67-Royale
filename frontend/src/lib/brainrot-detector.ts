@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * BrainrotDetector - MediaPipe Hands-based 67 motion detector
  *

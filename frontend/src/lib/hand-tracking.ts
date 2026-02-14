@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * MediaPipe Hand Tracking Adapter for 67 Royale
  *

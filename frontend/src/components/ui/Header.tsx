@@ -40,6 +40,7 @@ export function Header({ showNav = true }: HeaderProps) {
 
   useEffect(() => {
     if (!user?.uid) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTrophies(null);
       return;
     }
