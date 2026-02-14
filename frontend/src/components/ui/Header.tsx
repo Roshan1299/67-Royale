@@ -12,6 +12,7 @@ interface HeaderProps {
 export function Header({ showNav = true }: HeaderProps) {
   const pathname = usePathname();
   const isDuelPage = pathname?.startsWith('/duel');
+  const isPvpPage = pathname?.startsWith('/pvp');
   const [playerCount, setPlayerCount] = useState<number | null>(null);
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,7 +61,7 @@ export function Header({ showNav = true }: HeaderProps) {
             <div className="w-6 h-6 sm:w-7 sm:h-7 bg-accent-green rounded-md flex items-center justify-center group-hover:scale-105 transition-transform">
               <span className="text-[10px] sm:text-xs font-black text-black">67</span>
             </div>
-            <span className="text-sm sm:text-base font-bold text-white tracking-tight">RANKED</span>
+            <span className="text-sm sm:text-base font-bold text-white tracking-tight">ROYALE</span>
           </Link>
         </div>
 
@@ -70,22 +71,32 @@ export function Header({ showNav = true }: HeaderProps) {
             <Link
               href="/"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                !isDuelPage 
-                  ? 'bg-accent-green text-black' 
+                !isDuelPage && !isPvpPage
+                  ? 'bg-accent-green text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
               SOLO
             </Link>
             <Link
-              href="/duel"
+              href="/pvp"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                isDuelPage 
-                  ? 'bg-accent-green text-black' 
+                isPvpPage
+                  ? 'bg-accent-green text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              DUEL
+              PVP
+            </Link>
+            <Link
+              href="/duel"
+              className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
+                isDuelPage
+                  ? 'bg-accent-green text-black'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              FRIENDLY
             </Link>
           </div>
         )}
