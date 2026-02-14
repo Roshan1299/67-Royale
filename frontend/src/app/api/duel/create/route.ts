@@ -5,6 +5,15 @@ import { randomUUID } from 'crypto';
 
 const DUEL_EXPIRY_MINUTES = 15;
 
+function generateLobbyCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0/O/1/I to avoid confusion
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verify Firebase auth token
@@ -35,12 +44,14 @@ export async function POST(request: NextRequest) {
     // Create duel
     const expiresAt = new Date(Date.now() + DUEL_EXPIRY_MINUTES * 60 * 1000);
     const playerKey = randomUUID();
+    const lobbyCode = generateLobbyCode();
 
     let duelId: string;
     try {
       const duelRef = await db.collection('duels').add({
         duration_ms,
         status: 'waiting',
+        lobby_code: lobbyCode,
         expires_at: expiresAt.toISOString(),
         created_at: new Date().toISOString()
       });
@@ -71,6 +82,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       duelId,
       player_key: playerKey,
+      lobbyCode,
       shareUrl
     });
   } catch (error) {

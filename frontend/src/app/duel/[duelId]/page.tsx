@@ -2,13 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getClientDb } from '@/lib/firebase/client';
-import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { HandTracker, RepCounter, CalibrationTracker } from '@/lib/hand-tracking';
-import { CalibrationOverlay } from '@/components/game/CalibrationOverlay';
-import { CountdownOverlay } from '@/components/game/CountdownOverlay';
-import { GameOverlay } from '@/components/game/GameOverlay';
 import { Header } from '@/components/ui/Header';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
 import { useWebRTC } from '@/hooks/useWebRTC';
@@ -60,6 +55,7 @@ interface DuelData {
   duration_ms: number;
   status: string;
   start_at: number | null;
+  lobby_code?: string | null;
 }
 
 interface DuelPlayer {
@@ -100,9 +96,9 @@ export default function DuelPage() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [trackingLost, setTrackingLost] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
-  const [result, setResult] = useState<{ 
-    myScore: number; 
-    opponentScore: number; 
+  const [result, setResult] = useState<{
+    myScore: number;
+    opponentScore: number;
     outcome: string;
     myRankStats?: { dailyRank: number; allTimeRank: number; percentile: number } | null;
     opponentRankStats?: { dailyRank: number; allTimeRank: number; percentile: number } | null;
@@ -115,7 +111,17 @@ export default function DuelPage() {
   const [containerSize, setContainerSize] = useState(400);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // WebRTC state
+  // Refs for values read inside polling callbacks (avoids stale closures)
+  const pageStateRef = useRef<PageState>('loading');
+  const myPlayerKeyRef = useRef<string | null>(null);
+  const resultRef = useRef<typeof result>(null);
+
+  // Keep refs in sync with state
+  useEffect(() => { pageStateRef.current = pageState; }, [pageState]);
+  useEffect(() => { myPlayerKeyRef.current = myPlayerKey; }, [myPlayerKey]);
+  useEffect(() => { resultRef.current = result; }, [result]);
+
+  // WebRTC state for side-by-side video
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -211,47 +217,50 @@ export default function DuelPage() {
     loadDuel();
   }, [duelId, router]);
 
-  // Subscribe to realtime updates via Firestore onSnapshot
+  // Poll duel state via API (replaces Firestore listeners which require write permissions)
   useEffect(() => {
     if (!duelId) return;
-    const db = getClientDb();
 
-    // Listen to duel document changes
-    const unsubDuel = onSnapshot(doc(db, 'duels', duelId), (snapshot) => {
-      if (snapshot.exists()) {
-        const newDuel = { id: snapshot.id, ...snapshot.data() } as DuelData;
-        setDuel(newDuel);
-        if (newDuel.status === 'active' && pageState === 'lobby') {
-          setPageState('calibrating');
-        }
-      }
-    });
+    // Only poll during lobby and results states
+    const shouldPoll = () => {
+      const s = pageStateRef.current;
+      return s === 'lobby' || s === 'results';
+    };
 
-    // Listen to duel_players changes
-    const playersQuery = query(collection(db, 'duel_players'), where('duel_id', '==', duelId));
-    const unsubPlayers = onSnapshot(playersQuery, async () => {
-      // Refetch via API for consistency
+    const pollDuel = async () => {
+      if (!shouldPoll()) return;
+
       try {
         const res = await fetch(`/api/duel/${duelId}`);
+        if (!res.ok) return;
         const data = await res.json();
+
+        setDuel(data.duel);
         setPlayers(data.players);
 
-        // If we're in results and waiting for opponent, check if they've submitted
-        if (pageState === 'results' && !result?.opponentScore) {
-          const myPlayer = data.players.find((p: DuelPlayer) => p.player_key === myPlayerKey);
-          const opponent = data.players.find((p: DuelPlayer) => p.player_key !== myPlayerKey);
+        const currentPageState = pageStateRef.current;
+        const currentResult = resultRef.current;
+        const currentMyPlayerKey = myPlayerKeyRef.current;
+
+        // Transition: duel started while we're in lobby
+        if (data.duel.status === 'active' && currentPageState === 'lobby') {
+          console.log('[67ranked] Duel started, transitioning to calibrating');
+          setPageState('calibrating');
+        }
+
+        // Transition: waiting for opponent score in results
+        if (currentPageState === 'results' && !currentResult?.opponentScore && currentMyPlayerKey) {
+          const myPlayer = data.players.find((p: DuelPlayer) => p.player_key === currentMyPlayerKey);
+          const opponent = data.players.find((p: DuelPlayer) => p.player_key !== currentMyPlayerKey);
 
           if (myPlayer?.score !== null && opponent?.score !== null) {
-            // Both have submitted - calculate result
-            const is67Reps = duel && is67RepsMode(duel.duration_ms);
+            const is67Reps = is67RepsMode(data.duel.duration_ms);
             let outcome: 'win' | 'lose' | 'tie' = 'tie';
 
             if (is67Reps) {
-              // Lower time wins
               if (myPlayer.score < opponent.score) outcome = 'win';
               else if (myPlayer.score > opponent.score) outcome = 'lose';
             } else {
-              // Higher reps wins
               if (myPlayer.score > opponent.score) outcome = 'win';
               else if (myPlayer.score < opponent.score) outcome = 'lose';
             }
@@ -266,15 +275,18 @@ export default function DuelPage() {
           }
         }
       } catch (err) {
-        console.error('Failed to refetch players:', err);
+        console.error('[67ranked] Poll error:', err);
       }
-    });
-
-    return () => {
-      unsubDuel();
-      unsubPlayers();
     };
-  }, [duelId, pageState, myPlayerKey, result, duel]);
+
+    // Poll every 2 seconds
+    const interval = setInterval(pollDuel, 2000);
+    // Also poll immediately
+    pollDuel();
+
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duelId]);
 
   // Join duel
   const handleJoin = async () => {
@@ -302,6 +314,15 @@ export default function DuelPage() {
       const data = await response.json();
       sessionStorage.setItem(`duel_${duelId}_player_key`, data.player_key);
       setMyPlayerKey(data.player_key);
+
+      // Refetch players so we immediately see updated state
+      const duelRes = await fetch(`/api/duel/${duelId}`);
+      if (duelRes.ok) {
+        const duelData = await duelRes.json();
+        setPlayers(duelData.players);
+        setDuel(duelData.duel);
+      }
+
       setPageState('lobby');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join duel');
@@ -318,7 +339,8 @@ export default function DuelPage() {
     const newReady = !myPlayer?.ready;
 
     try {
-      await fetch('/api/duel/ready', {
+      console.log('[67ranked] Toggling ready:', newReady);
+      const response = await fetch('/api/duel/ready', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -328,8 +350,23 @@ export default function DuelPage() {
         })
       });
 
-      const allReady = players.every(p => p.player_key === myPlayerKey ? newReady : p.ready) && players.length === 2;
+      if (!response.ok) {
+        throw new Error('Failed to update ready status');
+      }
+
+      // Wait a bit for Firestore to propagate before checking
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Refetch current state
+      const duelRes = await fetch(`/api/duel/${duelId}`);
+      const duelData = await duelRes.json();
+      setPlayers(duelData.players);
+
+      const allReady = duelData.players.every((p: DuelPlayer) => p.ready) && duelData.players.length === 2;
+      console.log('[67ranked] All ready check:', allReady, duelData.players);
+
       if (allReady) {
+        console.log('[67ranked] Starting duel...');
         await fetch('/api/duel/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -337,7 +374,7 @@ export default function DuelPage() {
         });
       }
     } catch (err) {
-      console.error('Ready error:', err);
+      console.error('[67ranked] Ready error:', err);
     }
   };
 
@@ -525,7 +562,12 @@ export default function DuelPage() {
       const tracker = new HandTracker();
       trackerRef.current = tracker;
       repCounterRef.current = new RepCounter();
-      calibrationTrackerRef.current = new CalibrationTracker();
+
+      const calibrationTracker = new CalibrationTracker();
+      calibrationTrackerRef.current = calibrationTracker;
+
+      // Link calibration tracker to hand tracker (required for calibration to work)
+      calibrationTracker.setTracker(tracker);
 
       await tracker.initialize(
         videoRef.current,
@@ -572,27 +614,34 @@ export default function DuelPage() {
       if (containerRef.current) {
         const parent = containerRef.current.parentElement;
         if (parent) {
-          const width = parent.clientWidth - 32; // Account for padding
-          const height = parent.clientHeight - 120; // More room for vertical space
-          // Use the smaller dimension to keep square
-          // Max 400px on mobile (<640px), 550px on larger screens
+          const availWidth = parent.clientWidth - 32;
+          const availHeight = parent.clientHeight - 120;
           const isMobile = window.innerWidth < 640;
-          const maxSize = isMobile ? 400 : 550;
-          const size = Math.min(width, height, maxSize);
-          setContainerSize(Math.max(size, 300)); // minimum 300px (increased from 240px)
+
+          if (remoteStream) {
+            // Side-by-side: each panel is half width, keep square aspect per panel
+            const maxPanelSize = isMobile ? 300 : 450;
+            const panelFromWidth = Math.floor((availWidth - 8) / 2); // 8px gap
+            const panelSize = Math.min(panelFromWidth, availHeight, maxPanelSize);
+            setContainerSize(Math.max(panelSize, 240));
+          } else {
+            // Single view (no remote stream yet)
+            const maxSize = isMobile ? 400 : 550;
+            const size = Math.min(availWidth, availHeight, maxSize);
+            setContainerSize(Math.max(size, 300));
+          }
         }
       }
     };
-    
+
     updateSize();
     window.addEventListener('resize', updateSize);
-    // Small delay to ensure parent is sized
     const timeout = setTimeout(updateSize, 100);
     return () => {
       window.removeEventListener('resize', updateSize);
       clearTimeout(timeout);
     };
-  }, [pageState]); // Re-run when page state changes
+  }, [pageState, remoteStream]);
 
   // Cleanup
   useEffect(() => {
@@ -748,7 +797,27 @@ export default function DuelPage() {
 
           {!opponent && (
               <div className="mb-5">
-                <p className="text-white/50 text-xs mb-1.5">Share this link:</p>
+                {duel?.lobby_code && (
+                  <div className="mb-4">
+                    <p className="text-white/50 text-xs mb-1.5 text-center">Lobby Code</p>
+                    <div
+                      className="bg-white/5 border border-white/10 rounded-xl p-4 text-center cursor-pointer hover:bg-white/10 transition-all"
+                      onClick={() => {
+                        navigator.clipboard.writeText(duel.lobby_code!);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                    >
+                      <p className="text-4xl font-mono font-bold text-accent-green tracking-[0.3em]">
+                        {duel.lobby_code}
+                      </p>
+                      <p className="text-white/40 text-xs mt-2 flex items-center justify-center gap-1">
+                        {copied ? <><CheckIcon /> Copied!</> : <><CopyIcon /> Tap to copy</>}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <p className="text-white/40 text-xs mb-1.5">Or share link:</p>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -798,7 +867,9 @@ export default function DuelPage() {
     <main className="min-h-screen bg-bg-primary bg-grid-pattern bg-gradient-radial">
       <Header />
       <div className="min-h-screen flex items-center justify-center p-4 pt-16 pb-12">
-        <div 
+        <div className={`flex ${remoteStream ? 'gap-2' : ''} items-start`}>
+        {/* My camera panel - clean feed with hand tracking, minimal overlays */}
+        <div
           ref={containerRef}
           className="relative rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 shadow-xl"
           style={{ width: containerSize, height: containerSize }}
@@ -818,49 +889,35 @@ export default function DuelPage() {
             className="absolute inset-0 w-full h-full"
         />
 
-        {/* Opponent PIP video via WebRTC */}
-        {remoteStream && (
-          <div className="absolute top-2 right-2 z-10" style={{ width: Math.round(containerSize * 0.3), height: Math.round(containerSize * 0.3) }}>
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover rounded-lg border-2 border-white/20 shadow-lg"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-            {(() => {
-              const opponent = players.find(p => p.player_key !== myPlayerKey);
-              return opponent ? (
-                <p className="text-center text-white/70 text-[10px] mt-0.5 truncate font-medium drop-shadow-md">
-                  {opponent.username}
-                </p>
-              ) : null;
-            })()}
+        {/* Minimal status indicator instead of full overlays */}
+        {pageState === 'calibrating' && (
+          <div className="absolute top-3 left-0 right-0 text-center z-10">
+            <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
+              trackingLost ? 'bg-red-500/80 text-white' : 'bg-accent-green/80 text-black'
+            }`}>
+              {trackingState?.initState === 'loading' ? 'Loading model...' :
+               trackingState?.initState === 'warming_up' ? 'Warming up...' :
+               trackingLost ? 'Show both hands' : 'Hold steady...'}
+            </span>
           </div>
         )}
 
-        {pageState === 'calibrating' && calibrationTrackerRef.current && (
-          <CalibrationOverlay
-            progress={calibrationTrackerRef.current.getProgress()}
-            bothHandsDetected={!trackingLost}
-            backendWarning={trackingState?.backendWarning}
-            initState={trackingState?.initState as 'idle' | 'loading' | 'warming_up' | 'ready' | 'error' | undefined}
-          />
-        )}
-
         {pageState === 'countdown' && (
-          <CountdownOverlay value={countdownValue} />
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <span className={`text-8xl font-black ${countdownValue === 0 ? 'text-accent-green' : 'text-white'}`}>
+              {countdownValue === 0 ? 'GO!' : countdownValue}
+            </span>
+          </div>
         )}
 
         {pageState === 'playing' && (
-          <GameOverlay
-              repCount={displayRepCount}
-            timeRemaining={timeRemaining}
-              elapsedTime={elapsedTime}
-              is67RepsMode={duel ? is67RepsMode(duel.duration_ms) : false}
-            trackingLost={trackingLost}
-          />
+          <div className="absolute top-3 left-0 right-0 text-center z-10">
+            <span className="bg-black/60 backdrop-blur-sm text-white text-lg font-bold px-4 py-1.5 rounded-full">
+              {duel && is67RepsMode(duel.duration_ms)
+                ? `${displayRepCount} / 67`
+                : `${displayRepCount} reps`}
+            </span>
+          </div>
         )}
 
           {pageState === 'results' && (() => {
@@ -1285,6 +1342,29 @@ export default function DuelPage() {
           </div>
             );
           })()}
+        </div>
+
+        {/* Opponent video panel - side by side during gameplay */}
+        {remoteStream && (
+          <div
+            className="relative rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 shadow-xl"
+            style={{ width: containerSize, height: containerSize }}
+          >
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ transform: 'scaleX(-1)' }}
+            />
+            <div className="absolute bottom-2 left-2 z-10">
+              <span className="bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
+                {players.find(p => p.player_key !== myPlayerKey)?.username || 'Opponent'}
+              </span>
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </main>

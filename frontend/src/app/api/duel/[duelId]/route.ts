@@ -81,6 +81,7 @@ export async function GET(
       status: string;
       start_at: string | null;
       expires_at: string;
+      lobby_code?: string;
     };
 
     // Get players
@@ -88,13 +89,15 @@ export async function GET(
       .where('duel_id', '==', duelId)
       .get();
 
-    const players = playersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Array<{
-      id: string;
-      player_key: string;
-      username: string;
-      ready: boolean;
-      score: number | null;
-    }>;
+    const players = playersSnap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => a.id.localeCompare(b.id)) as Array<{
+        id: string;
+        player_key: string;
+        username: string;
+        ready: boolean;
+        score: number | null;
+      }>;
 
     // Calculate rank stats if duel is complete and it's a standard duration
     const isStandardDuration =
@@ -123,6 +126,7 @@ export async function GET(
         id: duel.id,
         duration_ms: duel.duration_ms,
         status: duel.status,
+        lobby_code: duel.lobby_code || null,
         start_at: duel.start_at ? new Date(duel.start_at).getTime() : null,
         expires_at: new Date(duel.expires_at).getTime()
       },
