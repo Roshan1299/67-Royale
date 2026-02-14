@@ -4,13 +4,26 @@ import { getAuth, Auth } from 'firebase-admin/auth';
 
 function getAdminApp(): App {
   if (getApps().length === 0) {
-    return initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
+    try {
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+      if (!projectId || !clientEmail || !privateKey) {
+        throw new Error('Missing Firebase Admin credentials. Check FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY env vars.');
+      }
+
+      return initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
+      });
+    } catch (error) {
+      console.error('[Firebase Admin] Initialization error:', error);
+      throw error;
+    }
   }
   return getApps()[0];
 }
@@ -33,10 +46,18 @@ export async function verifyAuthToken(request: Request): Promise<{
   email: string | null;
 } | null> {
   const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return null;
+  if (!authHeader?.startsWith('Bearer ')) {
+    console.error('[verifyAuthToken] No Bearer token in Authorization header');
+    return null;
+  }
 
   try {
     const token = authHeader.split('Bearer ')[1];
+    if (!token || token === 'null' || token === 'undefined') {
+      console.error('[verifyAuthToken] Invalid token value:', token);
+      return null;
+    }
+
     const decoded = await getAdminAuth().verifyIdToken(token);
     return {
       uid: decoded.uid,
@@ -44,7 +65,8 @@ export async function verifyAuthToken(request: Request): Promise<{
       photoURL: decoded.picture || null,
       email: decoded.email || null,
     };
-  } catch {
+  } catch (error) {
+    console.error('[verifyAuthToken] Token verification failed:', error instanceof Error ? error.message : error);
     return null;
   }
 }

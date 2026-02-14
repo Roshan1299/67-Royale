@@ -49,7 +49,21 @@ export async function GET(request: NextRequest) {
     const scores = snap.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-    })) as { id: string; username: string; score: number; created_at: string }[];
+    })) as { id: string; username: string; score: number; created_at: string; photoURL?: string | null; uid?: string }[];
+
+    // Deduplicate by uid - keep only the best score per user
+    const seenUids = new Set<string>();
+    const deduplicatedScores = scores.filter(score => {
+      // If no uid, allow all entries (backward compatibility for old scores)
+      if (!score.uid) return true;
+
+      // Skip if we've already seen this uid
+      if (seenUids.has(score.uid)) return false;
+
+      // Mark as seen and include
+      seenUids.add(score.uid);
+      return true;
+    });
 
     // Calculate ranks (ties share the same rank)
     const entries: LeaderboardEntry[] = [];
@@ -57,15 +71,15 @@ export async function GET(request: NextRequest) {
     let lastScore: number | null = null;
     let sameScoreCount = 0;
 
-    for (let i = 0; i < scores.length; i++) {
-      const score = scores[i];
-      
+    for (let i = 0; i < deduplicatedScores.length; i++) {
+      const score = deduplicatedScores[i];
+
       // For 67 reps (ASC), a higher score means worse rank
       // For timed modes (DESC), a lower score means worse rank
-      const scoreChanged = is67Reps 
+      const scoreChanged = is67Reps
         ? (lastScore !== null && score.score > lastScore)
         : (lastScore !== null && score.score < lastScore);
-      
+
       if (scoreChanged) {
         currentRank += sameScoreCount;
         sameScoreCount = 1;
@@ -80,7 +94,9 @@ export async function GET(request: NextRequest) {
         username: score.username,
         score: score.score,
         rank: currentRank,
-        created_at: score.created_at
+        created_at: score.created_at,
+        photoURL: score.photoURL || null,
+        uid: score.uid,
       });
 
       lastScore = score.score;

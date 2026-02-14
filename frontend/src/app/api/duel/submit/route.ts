@@ -245,22 +245,27 @@ export async function POST(request: NextRequest) {
           myTrophyDelta = getPlayerOutcome(myPlayer.score, opponent.score);
           opponentTrophyDelta = getPlayerOutcome(opponent.score, myPlayer.score);
 
-          const updateTrophies = async (uid: string, delta: number) => {
-            if (delta === 0) return;
+          const updateTrophies = async (uid: string, delta: number, username: string, photoURL: string | null | undefined) => {
+            if (delta === 0) {
+              // Still merge profile data even if no trophy change
+              const ref = db.collection('user_stats').doc(uid);
+              await ref.set({ username: username || null, photoURL: photoURL || null }, { merge: true });
+              return;
+            }
             const ref = db.collection('user_stats').doc(uid);
             if (delta > 0) {
-              await ref.set({ trophies: FieldValue.increment(delta) }, { merge: true });
+              await ref.set({ trophies: FieldValue.increment(delta), username: username || null, photoURL: photoURL || null }, { merge: true });
             } else {
               // Floor at 0: read current value, then set
               const snap = await ref.get();
               const current = snap.exists ? (snap.data()?.trophies ?? 0) : 0;
               const newVal = Math.max(0, current + delta);
-              await ref.set({ trophies: newVal }, { merge: true });
+              await ref.set({ trophies: newVal, username: username || null, photoURL: photoURL || null }, { merge: true });
             }
           };
 
-          if (myPlayer.uid) await updateTrophies(myPlayer.uid, myTrophyDelta);
-          if (opponent.uid) await updateTrophies(opponent.uid, opponentTrophyDelta);
+          if (myPlayer.uid) await updateTrophies(myPlayer.uid, myTrophyDelta, myPlayer.username, myPlayer.photoURL);
+          if (opponent.uid) await updateTrophies(opponent.uid, opponentTrophyDelta, opponent.username, opponent.photoURL);
         } catch (err) {
           console.error('Trophy update failed:', err);
         }

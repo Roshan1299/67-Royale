@@ -406,12 +406,16 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
   // Submit score
   const handleSubmit = async () => {
     if (!sessionTokenRef.current) return;
-    
+
     setIsSubmitting(true);
     setSubmitError(null);
-    
+
     try {
       const idToken = await getIdToken();
+      if (!idToken) {
+        throw new Error('Please sign in to submit your score');
+      }
+
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: {

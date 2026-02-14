@@ -50,6 +50,8 @@ export interface LeaderboardEntry {
   score: number;
   rank: number;
   created_at: string;
+  photoURL?: string | null;
+  uid?: string;
 }
 
 // Duel state for UI

@@ -20,9 +20,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify Firebase auth token to get user identity
-    const authUser = await verifyAuthToken(request);
+    let authUser;
+    try {
+      authUser = await verifyAuthToken(request);
+    } catch (authError) {
+      console.error('[Submit] Auth verification error:', authError);
+      return NextResponse.json({ error: 'Authentication verification failed' }, { status: 500 });
+    }
+
     if (!authUser) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required. Please sign in.' }, { status: 401 });
     }
 
     const { uid, displayName: username, photoURL } = authUser;
@@ -85,56 +92,91 @@ export async function POST(request: NextRequest) {
     });
     const scoreId = docRef.id;
 
+    // Also update user_stats with username/photoURL (for PvP leaderboard display)
+    // This ensures users appear correctly in PvP leaderboard even if they haven't played PvP yet
+    try {
+      await db.collection('user_stats').doc(uid).set({
+        username: username || null,
+        photoURL: photoURL || null,
+      }, { merge: true });
+    } catch (err) {
+      console.error('Failed to update user_stats:', err);
+      // Don't fail the submission if this fails
+    }
+
     // Calculate ranks and percentile
-    // Get total count for all-time
-    const totalCountSnap = await db.collection('scores')
-      .where('duration_ms', '==', payload.duration_ms)
-      .count()
-      .get();
-    const totalCount = totalCountSnap.data().count;
+    // Wrap in try-catch to handle missing indexes gracefully
+    let dailyRank, allTimeRank, percentile, totalCount;
 
-    // Get all-time rank (count of better scores + 1)
-    let allTimeRank = 1;
-    if (is67Reps) {
-      const betterSnap = await db.collection('scores')
+    try {
+      // Get total count for all-time
+      const totalCountSnap = await db.collection('scores')
         .where('duration_ms', '==', payload.duration_ms)
-        .where('score', '<', score)
         .count()
         .get();
-      allTimeRank = betterSnap.data().count + 1;
-    } else {
-      const betterSnap = await db.collection('scores')
-        .where('duration_ms', '==', payload.duration_ms)
-        .where('score', '>', score)
-        .count()
-        .get();
-      allTimeRank = betterSnap.data().count + 1;
+      totalCount = totalCountSnap.data().count;
+
+      // Get all-time rank (count of better scores + 1)
+      allTimeRank = 1;
+      if (is67Reps) {
+        const betterSnap = await db.collection('scores')
+          .where('duration_ms', '==', payload.duration_ms)
+          .where('score', '<', score)
+          .count()
+          .get();
+        allTimeRank = betterSnap.data().count + 1;
+      } else {
+        const betterSnap = await db.collection('scores')
+          .where('duration_ms', '==', payload.duration_ms)
+          .where('score', '>', score)
+          .count()
+          .get();
+        allTimeRank = betterSnap.data().count + 1;
+      }
+
+      // Get daily rank (past 24 hours)
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      dailyRank = 1;
+      if (is67Reps) {
+        const betterDailySnap = await db.collection('scores')
+          .where('duration_ms', '==', payload.duration_ms)
+          .where('created_at', '>=', twentyFourHoursAgo)
+          .where('score', '<', score)
+          .count()
+          .get();
+        dailyRank = betterDailySnap.data().count + 1;
+      } else {
+        const betterDailySnap = await db.collection('scores')
+          .where('duration_ms', '==', payload.duration_ms)
+          .where('created_at', '>=', twentyFourHoursAgo)
+          .where('score', '>', score)
+          .count()
+          .get();
+        dailyRank = betterDailySnap.data().count + 1;
+      }
+
+      percentile = totalCount ? Math.round((allTimeRank / totalCount) * 100) : 1;
+    } catch (rankError: unknown) {
+      // If index is missing, log the error but still allow the submission to succeed
+      const errorMsg = rankError instanceof Error ? rankError.message : String(rankError);
+      console.error('[Submit] Rank calculation failed (missing index?):', errorMsg);
+
+      // Extract index creation URL if present
+      if (errorMsg.includes('console.firebase.google.com')) {
+        const match = errorMsg.match(/(https:\/\/console\.firebase\.google\.com[^\s]+)/);
+        if (match) {
+          console.error('[Submit] Create index here:', match[1]);
+        }
+      }
+
+      // Return null ranks - the frontend will handle this gracefully
+      dailyRank = undefined;
+      allTimeRank = undefined;
+      percentile = undefined;
+      totalCount = 0;
     }
 
-    // Get daily rank (past 24 hours)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    let dailyRank = 1;
-    if (is67Reps) {
-      const betterDailySnap = await db.collection('scores')
-        .where('duration_ms', '==', payload.duration_ms)
-        .where('created_at', '>=', twentyFourHoursAgo)
-        .where('score', '<', score)
-        .count()
-        .get();
-      dailyRank = betterDailySnap.data().count + 1;
-    } else {
-      const betterDailySnap = await db.collection('scores')
-        .where('duration_ms', '==', payload.duration_ms)
-        .where('created_at', '>=', twentyFourHoursAgo)
-        .where('score', '>', score)
-        .count()
-        .get();
-      dailyRank = betterDailySnap.data().count + 1;
-    }
-
-    const percentile = totalCount ? Math.round((allTimeRank / totalCount) * 100) : 1;
-
-    return NextResponse.json({ 
+    return NextResponse.json({
       scoreId,
       dailyRank,
       allTimeRank,
@@ -142,7 +184,12 @@ export async function POST(request: NextRequest) {
       totalCount
     });
   } catch (error) {
-    console.error('Submit error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[Submit] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[Submit] Error details:', errorMessage);
+    return NextResponse.json({
+      error: 'Failed to submit score. Please try again.',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    }, { status: 500 });
   }
 }

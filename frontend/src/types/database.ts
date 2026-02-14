@@ -52,4 +52,6 @@ export interface ChallengeEntry {
 
 export interface UserStats {
   trophies: number;
+  username?: string;
+  photoURL?: string | null;
 }

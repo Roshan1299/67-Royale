@@ -13,6 +13,7 @@ export function Header({ showNav = true }: HeaderProps) {
   const pathname = usePathname();
   const isDuelPage = pathname?.startsWith('/duel');
   const isPvpPage = pathname?.startsWith('/pvp');
+  const isLeaderboardPage = pathname?.startsWith('/leaderboard');
   const [playerCount, setPlayerCount] = useState<number | null>(null);
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,9 +90,21 @@ export function Header({ showNav = true }: HeaderProps) {
         {showNav && (
           <div className="inline-flex bg-black/50 rounded-full p-0.5 border border-white/10">
             <Link
+              href="/leaderboard"
+              className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
+                isLeaderboardPage
+                  ? 'bg-accent-green text-black'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline-block" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 21h10v-2H7v2zm5-18L2 9l2 1.5L12 5l8 5.5L22 9 12 3zm0 4.58L5.66 12 12 16.42 18.34 12 12 7.58z"/>
+              </svg>
+            </Link>
+            <Link
               href="/"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                !isDuelPage && !isPvpPage
+                !isDuelPage && !isPvpPage && !isLeaderboardPage
                   ? 'bg-accent-green text-black'
                   : 'text-white/60 hover:text-white'
               }`}
