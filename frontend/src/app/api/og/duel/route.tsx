@@ -1,9 +1,7 @@
 import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
-
-export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,23 +12,33 @@ export async function GET(request: NextRequest) {
       return new Response('Missing duel ID', { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
     
     // Fetch duel data
-    const { data: duel } = await supabase
-      .from('duels')
-      .select('duration_ms, status, created_at')
-      .eq('id', duelId)
-      .single();
+    const duelDoc = await db.collection('duels').doc(duelId).get();
     
-    // Fetch players
-    const { data: players } = await supabase
-      .from('duel_players')
-      .select('username, score')
-      .eq('duel_id', duelId)
-      .order('id', { ascending: true });
+    if (!duelDoc.exists) {
+      throw new Error('Duel not found');
+    }
 
-    if (!duel || !players || players.length < 2) {
+    const duel = duelDoc.data() as {
+      duration_ms: number;
+      status: string;
+      created_at: string;
+    };
+
+    // Fetch players
+    const playersSnap = await db
+      .collection('duel_players')
+      .where('duel_id', '==', duelId)
+      .get();
+
+    const players = playersSnap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+    })) as Array<{ id: string; username: string; score: number | null }>;
+
+    if (!players || players.length < 2) {
       throw new Error('Duel not found');
     }
 

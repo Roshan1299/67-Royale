@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 import { is67RepsMode } from '@/types/game';
 
 interface Props {
@@ -11,21 +11,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { duelId } = await params;
   
   try {
-    const supabase = createServerClient();
+    const db = getDb();
     
     // Fetch duel data
-    const { data: duel } = await supabase
-      .from('duels')
-      .select('duration_ms, status')
-      .eq('id', duelId)
-      .single();
-    
+    const duelDoc = await db.collection('duels').doc(duelId).get();
+
+    if (!duelDoc.exists) {
+      return {
+        title: 'Duel Results | 67Ranked',
+        description: 'View duel results on 67Ranked',
+      };
+    }
+
+    const duel = duelDoc.data() as {
+      duration_ms: number;
+      status: string;
+    };
+
     // Fetch players
-    const { data: players } = await supabase
-      .from('duel_players')
-      .select('username, score')
-      .eq('duel_id', duelId)
-      .order('id', { ascending: true });
+    const playersSnap = await db
+      .collection('duel_players')
+      .where('duel_id', '==', duelId)
+      .get();
+
+    const players = playersSnap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+    })) as Array<{ id: string; username: string; score: number | null }>;
 
     if (!duel || !players || players.length < 2) {
       return {

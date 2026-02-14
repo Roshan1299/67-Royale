@@ -1,9 +1,7 @@
 import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
-
-export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,14 +19,17 @@ export async function GET(request: NextRequest) {
 
     // Fetch actual score data if ID provided
     if (scoreId) {
-      const supabase = createServerClient();
-      const { data } = await supabase
-        .from('scores')
-        .select('username, score, duration_ms, created_at')
-        .eq('id', scoreId)
-        .single();
+      const db = getDb();
+      const scoreDoc = await db.collection('scores').doc(scoreId).get();
 
-      if (data) {
+      if (scoreDoc.exists) {
+        const data = scoreDoc.data() as {
+          username: string;
+          score: number;
+          duration_ms: number;
+          created_at: string;
+        };
+
         username = data.username;
         score = data.score;
         durationMs = data.duration_ms;
@@ -37,47 +38,52 @@ export async function GET(request: NextRequest) {
         const is67Reps = is67RepsMode(durationMs);
         
         // Total count for all-time
-        const { count: total } = await supabase
-          .from('scores')
-          .select('*', { count: 'exact', head: true })
-          .eq('duration_ms', durationMs);
-        totalPlayers = total || 0;
+        const totalSnap = await db
+          .collection('scores')
+          .where('duration_ms', '==', durationMs)
+          .count()
+          .get();
+        totalPlayers = totalSnap.data().count;
 
         // All-time rank
         if (is67Reps) {
-          const { count } = await supabase
-            .from('scores')
-            .select('id', { count: 'exact', head: true })
-            .eq('duration_ms', durationMs)
-            .lt('score', score);
-          allTimeRank = (count || 0) + 1;
+          const rankSnap = await db
+            .collection('scores')
+            .where('duration_ms', '==', durationMs)
+            .where('score', '<', score)
+            .count()
+            .get();
+          allTimeRank = rankSnap.data().count + 1;
         } else {
-          const { count } = await supabase
-            .from('scores')
-            .select('id', { count: 'exact', head: true })
-            .eq('duration_ms', durationMs)
-            .gt('score', score);
-          allTimeRank = (count || 0) + 1;
+          const rankSnap = await db
+            .collection('scores')
+            .where('duration_ms', '==', durationMs)
+            .where('score', '>', score)
+            .count()
+            .get();
+          allTimeRank = rankSnap.data().count + 1;
         }
 
         // Daily rank (past 24 hours)
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         if (is67Reps) {
-          const { count } = await supabase
-            .from('scores')
-            .select('id', { count: 'exact', head: true })
-            .eq('duration_ms', durationMs)
-            .gte('created_at', twentyFourHoursAgo)
-            .lt('score', score);
-          dailyRank = (count || 0) + 1;
+          const dailySnap = await db
+            .collection('scores')
+            .where('duration_ms', '==', durationMs)
+            .where('created_at', '>=', twentyFourHoursAgo)
+            .where('score', '<', score)
+            .count()
+            .get();
+          dailyRank = dailySnap.data().count + 1;
         } else {
-          const { count } = await supabase
-            .from('scores')
-            .select('id', { count: 'exact', head: true })
-            .eq('duration_ms', durationMs)
-            .gte('created_at', twentyFourHoursAgo)
-            .gt('score', score);
-          dailyRank = (count || 0) + 1;
+          const dailySnap = await db
+            .collection('scores')
+            .where('duration_ms', '==', durationMs)
+            .where('created_at', '>=', twentyFourHoursAgo)
+            .where('score', '>', score)
+            .count()
+            .get();
+          dailyRank = dailySnap.data().count + 1;
         }
       }
     }

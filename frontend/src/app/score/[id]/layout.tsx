@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
 
 interface Props {
@@ -11,19 +11,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   
   try {
-    const supabase = createServerClient();
-    const { data: score } = await supabase
-      .from('scores')
-      .select('username, score, duration_ms')
-      .eq('id', id)
-      .single();
+    const db = getDb();
+    const scoreDoc = await db.collection('scores').doc(id).get();
 
-    if (!score) {
+    if (!scoreDoc.exists) {
       return {
         title: '67Ranked - Score Not Found',
         description: 'This score could not be found.',
       };
     }
+
+    const score = scoreDoc.data() as {
+      username: string;
+      score: number;
+      duration_ms: number;
+    };
 
     const is67Reps = is67RepsMode(score.duration_ms);
     const modeLabel = score.duration_ms === DURATION_6_7S ? '6.7s' 
