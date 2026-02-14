@@ -134,9 +134,9 @@ export function EndScreen({
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle green radial glow
+    // Subtle blue radial glow
     const gradient = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, 300);
-    gradient.addColorStop(0, 'rgba(74, 222, 128, 0.08)');
+    gradient.addColorStop(0, 'rgba(96, 165, 250, 0.08)');
     gradient.addColorStop(1, 'transparent');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
@@ -172,7 +172,7 @@ export function EndScreen({
     const modeLabel = duration === DURATION_6_7S ? '6.7s Sprint' 
       : duration === DURATION_20S ? '20s Endurance'
       : duration === DURATION_67_REPS ? '67 Reps' : '';
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = '#60a5fa';
     ctx.font = '500 16px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -194,7 +194,7 @@ export function EndScreen({
     const scoreUnit = is67Reps ? 's' : ' reps';
     
     ctx.save();
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = '#60a5fa';
     ctx.font = '900 88px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     const scoreY = bodyY + 85;
@@ -223,7 +223,7 @@ export function EndScreen({
       const totalBoxWidth = boxW * 3 + boxGap * 2;
       const startX = (width - totalBoxWidth) / 2;
 
-      const drawRankBox = (x: number, label: string, value: string, isGreen: boolean = false) => {
+      const drawRankBox = (x: number, label: string, value: string, isBlue: boolean = false) => {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.lineWidth = 1;
@@ -238,7 +238,7 @@ export function EndScreen({
         ctx.textBaseline = 'top';
         ctx.fillText(label.toUpperCase(), x + boxW / 2, boxY + 10);
 
-        ctx.fillStyle = isGreen ? '#4ade80' : '#fff';
+        ctx.fillStyle = isBlue ? '#60a5fa' : '#fff';
         ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
         ctx.textBaseline = 'bottom';
         ctx.fillText(value, x + boxW / 2, boxY + boxH - 8);
@@ -255,7 +255,7 @@ export function EndScreen({
     const ctaX = cardX + 20;
     const ctaW = cardW - 40;
 
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = '#60a5fa';
     ctx.beginPath();
     ctx.roundRect(ctaX, ctaY, ctaW, ctaH, 12);
     ctx.fill();
@@ -278,7 +278,7 @@ export function EndScreen({
       <div className="glass-panel rounded-lg sm:rounded-xl w-full max-w-xs sm:max-w-sm animate-scale-in overflow-hidden">
         {/* Header */}
         <div className="px-3 py-1.5 sm:px-4 sm:py-2 border-b border-white/5 flex items-center justify-between">
-          <span className="text-[9px] sm:text-[10px] font-mono text-accent-green uppercase tracking-wider">
+          <span className="text-[9px] sm:text-[10px] font-mono text-accent-blue uppercase tracking-wider">
             Complete
           </span>
           <span className="text-[9px] sm:text-[10px] font-mono text-white/30 uppercase">
@@ -291,7 +291,7 @@ export function EndScreen({
           <div className="text-center mb-3 sm:mb-4">
             {is67Reps ? (
               <>
-                <span className="score-display text-4xl sm:text-5xl text-accent-green">
+                <span className="score-display text-4xl sm:text-5xl text-accent-blue">
                   {formatElapsedTime(elapsedTime || 0)}
                 </span>
                 <span className="text-base sm:text-xl text-white/30 ml-1">s</span>
@@ -312,7 +312,7 @@ export function EndScreen({
               <div className="flex items-center justify-between text-[10px] sm:text-xs">
                 <span className="text-white/40">vs {result.opponentUsername}</span>
                 <span className={`font-bold ${
-                  result.outcome === 'win' ? 'text-accent-green' : 
+                  result.outcome === 'win' ? 'text-accent-blue' : 
                   result.outcome === 'lose' ? 'text-red-400' : 'text-yellow-400'
                 }`}>
                   {result.outcome === 'win' ? 'WIN' : result.outcome === 'lose' ? 'LOSS' : 'TIE'}
@@ -329,9 +329,9 @@ export function EndScreen({
           {/* Submitted badge with stats */}
           {isSubmitted && (
             <div className="mb-2.5 sm:mb-3 space-y-2">
-              <div className="flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 sm:px-3 bg-accent-green/10 rounded-md sm:rounded-lg border border-accent-green/30">
+              <div className="flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 sm:px-3 bg-accent-blue/10 rounded-md sm:rounded-lg border border-accent-blue/30">
                 <CheckIcon />
-                <span className="text-[10px] sm:text-xs text-accent-green font-medium">Saved</span>
+                <span className="text-[10px] sm:text-xs text-accent-blue font-medium">Saved</span>
               </div>
               
               {/* Rank and Percentile */}
@@ -347,7 +347,7 @@ export function EndScreen({
                   </div>
                   <div className="flex-1 p-2 bg-white/5 rounded-md border border-white/10">
                     <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Top</p>
-                    <p className="text-sm sm:text-base font-bold text-accent-green">{percentile}%</p>
+                    <p className="text-sm sm:text-base font-bold text-accent-blue">{percentile}%</p>
                   </div>
                 </div>
               )}
@@ -376,8 +376,8 @@ export function EndScreen({
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm bg-accent-green text-black transition-all ${
-                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent-green-dark'
+                className={`w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm bg-accent-blue text-black transition-all ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent-blue-dark'
                 }`}
               >
                 {isSubmitting ? 'Saving...' : 'Save Score'}

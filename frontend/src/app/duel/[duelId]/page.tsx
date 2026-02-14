@@ -745,8 +745,8 @@ export default function DuelPage() {
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-accent-green/20 border border-accent-green/30 flex items-center justify-center">
-                  <span className="text-accent-green font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-accent-blue/20 border border-accent-blue/30 flex items-center justify-center">
+                  <span className="text-accent-blue font-bold text-sm">
                     {(user?.displayName || 'A').charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -787,10 +787,10 @@ export default function DuelPage() {
 
             <div className="space-y-2 mb-5">
             {myPlayer && (
-                <div className={`p-3 rounded-lg ${myPlayer.ready ? 'bg-accent-green/10 border border-accent-green/30' : 'bg-white/5 border border-white/10'}`}>
+                <div className={`p-3 rounded-lg ${myPlayer.ready ? 'bg-accent-blue/10 border border-accent-blue/30' : 'bg-white/5 border border-white/10'}`}>
                 <div className="flex items-center justify-between">
                     <span className="text-white text-sm font-medium">{myPlayer.username} (You)</span>
-                    <span className={`text-xs ${myPlayer.ready ? 'text-accent-green' : 'text-white/40'}`}>
+                    <span className={`text-xs ${myPlayer.ready ? 'text-accent-blue' : 'text-white/40'}`}>
                       {myPlayer.ready ? 'Ready' : 'Not Ready'}
                   </span>
                 </div>
@@ -798,10 +798,10 @@ export default function DuelPage() {
             )}
 
             {opponent ? (
-                <div className={`p-3 rounded-lg ${opponent.ready ? 'bg-accent-green/10 border border-accent-green/30' : 'bg-white/5 border border-white/10'}`}>
+                <div className={`p-3 rounded-lg ${opponent.ready ? 'bg-accent-blue/10 border border-accent-blue/30' : 'bg-white/5 border border-white/10'}`}>
                 <div className="flex items-center justify-between">
                     <span className="text-white text-sm font-medium">{opponent.username}</span>
-                    <span className={`text-xs ${opponent.ready ? 'text-accent-green' : 'text-white/40'}`}>
+                    <span className={`text-xs ${opponent.ready ? 'text-accent-blue' : 'text-white/40'}`}>
                       {opponent.ready ? 'Ready' : 'Not Ready'}
                   </span>
                 </div>
@@ -826,7 +826,7 @@ export default function DuelPage() {
                         setTimeout(() => setCopied(false), 2000);
                       }}
                     >
-                      <p className="text-4xl font-mono font-bold text-accent-green tracking-[0.3em]">
+                      <p className="text-4xl font-mono font-bold text-accent-blue tracking-[0.3em]">
                         {duel.lobby_code}
                       </p>
                       <p className="text-white/40 text-xs mt-2 flex items-center justify-center gap-1">
@@ -862,14 +862,14 @@ export default function DuelPage() {
                 ? 'bg-white/10 text-white/50 cursor-not-allowed'
                 : myPlayer?.ready
                     ? 'bg-white/10 text-white hover:bg-white/20'
-                    : 'bg-accent-green text-black hover:bg-accent-green-dark'
+                    : 'bg-accent-blue text-black hover:bg-accent-blue-dark'
             }`}
           >
               {myPlayer?.ready ? 'Cancel Ready' : 'Ready'}
           </button>
 
           {opponent && players.every(p => p.ready) && (
-              <p className="text-accent-green text-xs text-center mt-3 animate-pulse">
+              <p className="text-accent-blue text-xs text-center mt-3 animate-pulse">
               Starting game...
             </p>
           )}
@@ -911,7 +911,7 @@ export default function DuelPage() {
         {pageState === 'calibrating' && (
           <div className="absolute top-3 left-0 right-0 text-center z-10">
             <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
-              trackingLost ? 'bg-red-500/80 text-white' : 'bg-accent-green/80 text-black'
+              trackingLost ? 'bg-red-500/80 text-white' : 'bg-accent-blue/80 text-black'
             }`}>
               {trackingState?.initState === 'loading' ? 'Loading model...' :
                trackingState?.initState === 'warming_up' ? 'Warming up...' :
@@ -922,7 +922,7 @@ export default function DuelPage() {
 
         {pageState === 'countdown' && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <span className={`text-8xl font-black ${countdownValue === 0 ? 'text-accent-green' : 'text-white'}`}>
+            <span className={`text-8xl font-black ${countdownValue === 0 ? 'text-accent-blue' : 'text-white'}`}>
               {countdownValue === 0 ? 'GO!' : countdownValue}
             </span>
           </div>
@@ -1018,9 +1018,9 @@ export default function DuelPage() {
               ctx.fillStyle = '#0a0a0a';
               ctx.fillRect(0, 0, width, height);
 
-              // Subtle green radial glow
+              // Subtle blue radial glow
               const gradient = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, 300);
-              gradient.addColorStop(0, 'rgba(74, 222, 128, 0.08)');
+              gradient.addColorStop(0, 'rgba(96, 165, 250, 0.08)');
               gradient.addColorStop(1, 'transparent');
               ctx.fillStyle = gradient;
               ctx.fillRect(0, 0, width, height);
@@ -1055,7 +1055,7 @@ export default function DuelPage() {
               const iconX = cardX + 20;
               const iconY = cardY + 14;
               const iconSize = 24;
-              ctx.strokeStyle = '#4ade80';
+              ctx.strokeStyle = '#60a5fa';
               ctx.lineWidth = 2;
               
               if (duel.duration_ms === DURATION_67_REPS) {
@@ -1067,12 +1067,12 @@ export default function DuelPage() {
                 ctx.beginPath();
                 ctx.arc(cx, cy, 5, 0, Math.PI * 2);
                 ctx.stroke();
-                ctx.fillStyle = '#4ade80';
+                ctx.fillStyle = '#60a5fa';
                 ctx.beginPath();
                 ctx.arc(cx, cy, 2, 0, Math.PI * 2);
                 ctx.fill();
               } else if (duel.duration_ms === DURATION_6_7S) {
-                ctx.fillStyle = '#4ade80';
+                ctx.fillStyle = '#60a5fa';
                 ctx.beginPath();
                 ctx.moveTo(iconX + 14, iconY + 2);
                 ctx.lineTo(iconX + 6, iconY + 12);
@@ -1102,7 +1102,7 @@ export default function DuelPage() {
                 if (ms === DURATION_67_REPS) return '67 Reps';
                 return (ms / 1000).toFixed(1) + 's';
               };
-              ctx.fillStyle = '#4ade80';
+              ctx.fillStyle = '#60a5fa';
               ctx.font = '500 16px system-ui, -apple-system, sans-serif';
               ctx.textAlign = 'left';
               ctx.textBaseline = 'middle';
@@ -1124,8 +1124,8 @@ export default function DuelPage() {
               const drawPlayerCard = (x: number, username: string, score: number, isPlayerWinner: boolean, isPlayerLoser: boolean) => {
                 // Card bg
                 if (isPlayerWinner) {
-                  ctx.fillStyle = 'rgba(74, 222, 128, 0.05)';
-                  ctx.strokeStyle = 'rgba(74, 222, 128, 0.3)';
+                  ctx.fillStyle = 'rgba(96, 165, 250, 0.05)';
+                  ctx.strokeStyle = 'rgba(96, 165, 250, 0.3)';
                 } else if (isPlayerLoser) {
                   ctx.fillStyle = 'rgba(239, 68, 68, 0.05)';
                   ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
@@ -1144,7 +1144,7 @@ export default function DuelPage() {
 
                 // Winner/Loser badge
                 if (isPlayerWinner) {
-                  ctx.fillStyle = '#4ade80';
+                  ctx.fillStyle = '#60a5fa';
                   ctx.font = 'bold 10px system-ui, -apple-system, sans-serif';
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'middle';
@@ -1167,7 +1167,7 @@ export default function DuelPage() {
                 // Score
                 const scoreStr = is67Reps ? formatTime(score) : score.toString();
                 ctx.save();
-                ctx.fillStyle = isPlayerWinner ? '#4ade80' : isPlayerLoser ? '#f87171' : '#fff';
+                ctx.fillStyle = isPlayerWinner ? '#60a5fa' : isPlayerLoser ? '#f87171' : '#fff';
                 ctx.font = '900 48px system-ui, -apple-system, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.translate(centerX, playerCardY + (hasLabel ? 100 : 92));
@@ -1246,7 +1246,7 @@ export default function DuelPage() {
                     ctx.fillText(labels[i], boxX + statBoxW / 2, statsY + 12);
                     
                     // Value
-                    ctx.fillStyle = i === 2 ? '#4ade80' : '#fff';
+                    ctx.fillStyle = i === 2 ? '#60a5fa' : '#fff';
                     ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
                     ctx.fillText(values[i], boxX + statBoxW / 2, statsY + 28);
                   }
@@ -1267,7 +1267,7 @@ export default function DuelPage() {
               const ctaX = cardX + 20;
               const ctaW = cardW - 40;
 
-              ctx.fillStyle = '#4ade80';
+              ctx.fillStyle = '#60a5fa';
               ctx.beginPath();
               ctx.roundRect(ctaX, ctaY, ctaW, ctaH, 10);
               ctx.fill();
@@ -1293,7 +1293,7 @@ export default function DuelPage() {
                   {/* Result header */}
                   <div className={`text-2xl font-bold mb-4 ${
                     waitingForOpponent ? 'text-white/50' :
-                result?.outcome === 'win' ? 'text-accent-green' :
+                result?.outcome === 'win' ? 'text-accent-blue' :
                 result?.outcome === 'lose' ? 'text-red-400' : 'text-yellow-400'
               }`}>
                     {waitingForOpponent ? 'WAITING...' :
@@ -1327,7 +1327,7 @@ export default function DuelPage() {
                     <div className="mb-4 flex items-center justify-center gap-2 bg-white/5 rounded-lg p-3 border border-white/10">
                       <TrophyIcon />
                       <span className={`text-2xl font-bold ${
-                        result.myTrophyDelta > 0 ? 'text-accent-green' :
+                        result.myTrophyDelta > 0 ? 'text-accent-blue' :
                         result.myTrophyDelta < 0 ? 'text-red-400' : 'text-white/50'
                       }`}>
                         {result.myTrophyDelta > 0 ? '+' : ''}{result.myTrophyDelta}
@@ -1348,7 +1348,7 @@ export default function DuelPage() {
                       </div>
                       <div className="bg-white/5 rounded-lg p-2 border border-white/10">
                         <p className="text-white/40 text-[10px] mb-0.5">Top</p>
-                        <p className="text-accent-green font-bold text-sm">{result.myRankStats.percentile}%</p>
+                        <p className="text-accent-blue font-bold text-sm">{result.myRankStats.percentile}%</p>
                       </div>
                     </div>
                   )}
@@ -1364,7 +1364,7 @@ export default function DuelPage() {
                       <>
                         <button
                           onClick={handleShareResult}
-                          className="w-full py-2.5 rounded-lg bg-accent-green text-black font-semibold text-sm hover:bg-accent-green-dark transition-all flex items-center justify-center gap-2"
+                          className="w-full py-2.5 rounded-lg bg-accent-blue text-black font-semibold text-sm hover:bg-accent-blue-dark transition-all flex items-center justify-center gap-2"
                         >
                           <ShareIcon />
                           Share

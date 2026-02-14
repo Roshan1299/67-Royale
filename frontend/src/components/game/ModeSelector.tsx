@@ -129,14 +129,14 @@ export function ModeSelector({ onSelect, onCancel }: ModeSelectorProps) {
                 >
                   {/* Selected indicator */}
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-accent-green rounded-full flex items-center justify-center">
+                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-accent-blue rounded-full flex items-center justify-center">
                       <CheckIcon />
                     </div>
                   )}
                   
                   {/* Icon */}
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto rounded-md sm:rounded-lg flex items-center justify-center mb-1.5 sm:mb-2 ${
-                    isSelected ? 'bg-accent-green/20 text-accent-green' : 'bg-white/5 text-white/40'
+                    isSelected ? 'bg-accent-blue/20 text-accent-blue' : 'bg-white/5 text-white/40'
                   }`}>
                     <Icon />
           </div>
@@ -152,7 +152,7 @@ export function ModeSelector({ onSelect, onCancel }: ModeSelectorProps) {
                   {/* Tag */}
                   <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-white/5">
                     <span className={`text-[9px] sm:text-[10px] font-semibold tracking-wider ${
-                      isSelected ? 'text-accent-green' : 'text-white/30'
+                      isSelected ? 'text-accent-blue' : 'text-white/30'
                     }`}>
                       {tag}
                     </span>
@@ -172,7 +172,7 @@ export function ModeSelector({ onSelect, onCancel }: ModeSelectorProps) {
                 }`}
               >
                 <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  showCustom ? 'bg-accent-green/20 text-accent-green' : 'bg-white/5 text-white/40'
+                  showCustom ? 'bg-accent-blue/20 text-accent-blue' : 'bg-white/5 text-white/40'
                 }`}>
                   <CustomIcon />
                 </div>

@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#0a0a0a',
-            backgroundImage: 'radial-gradient(ellipse at center top, rgba(74, 222, 128, 0.08) 0%, transparent 50%)',
+            backgroundImage: 'radial-gradient(ellipse at center top, rgba(96, 165, 250, 0.08) 0%, transparent 50%)',
           }}
         >
           {/* Card */}
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
                     width: 28,
                     height: 28,
                     borderRadius: '50%',
-                    border: '2px solid #4ade80',
+                    border: '2px solid #60a5fa',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -125,11 +125,11 @@ export async function GET(request: NextRequest) {
                       width: 12,
                       height: 12,
                       borderRadius: '50%',
-                      border: '2px solid #4ade80',
+                      border: '2px solid #60a5fa',
                     }}
                   />
                 </div>
-                <span style={{ fontSize: 18, fontWeight: 600, color: '#4ade80' }}>{modeLabel}</span>
+                <span style={{ fontSize: 18, fontWeight: 600, color: '#60a5fa' }}>{modeLabel}</span>
               </div>
               <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>{dateStr}</span>
             </div>
@@ -152,13 +152,13 @@ export async function GET(request: NextRequest) {
                   alignItems: 'center',
                   padding: '24px 20px',
                   width: 200,
-                  backgroundColor: outcome === 'player1' ? 'rgba(74, 222, 128, 0.05)' : outcome === 'player2' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                  border: outcome === 'player1' ? '1px solid rgba(74, 222, 128, 0.3)' : outcome === 'player2' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
+                  backgroundColor: outcome === 'player1' ? 'rgba(96, 165, 250, 0.05)' : outcome === 'player2' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                  border: outcome === 'player1' ? '1px solid rgba(96, 165, 250, 0.3)' : outcome === 'player2' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
                   borderRadius: 16,
                 }}
               >
                 {outcome === 'player1' && (
-                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#4ade80', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
+                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#60a5fa', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
                 )}
                 {outcome === 'player2' && (
                   <span style={{ fontSize: 10, fontWeight: 'bold', color: '#f87171', marginBottom: 8, letterSpacing: 1 }}>LOSER</span>
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
                     fontSize: 48,
                     fontWeight: 900,
                     fontStyle: 'italic',
-                    color: outcome === 'player1' ? '#4ade80' : outcome === 'player2' ? '#f87171' : '#fff',
+                    color: outcome === 'player1' ? '#60a5fa' : outcome === 'player2' ? '#f87171' : '#fff',
                     lineHeight: 1,
                   }}
                 >
@@ -193,13 +193,13 @@ export async function GET(request: NextRequest) {
                   alignItems: 'center',
                   padding: '24px 20px',
                   width: 200,
-                  backgroundColor: outcome === 'player2' ? 'rgba(74, 222, 128, 0.05)' : outcome === 'player1' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                  border: outcome === 'player2' ? '1px solid rgba(74, 222, 128, 0.3)' : outcome === 'player1' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
+                  backgroundColor: outcome === 'player2' ? 'rgba(96, 165, 250, 0.05)' : outcome === 'player1' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                  border: outcome === 'player2' ? '1px solid rgba(96, 165, 250, 0.3)' : outcome === 'player1' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
                   borderRadius: 16,
                 }}
               >
                 {outcome === 'player2' && (
-                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#4ade80', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
+                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#60a5fa', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
                 )}
                 {outcome === 'player1' && (
                   <span style={{ fontSize: 10, fontWeight: 'bold', color: '#f87171', marginBottom: 8, letterSpacing: 1 }}>LOSER</span>
@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
                     fontSize: 48,
                     fontWeight: 900,
                     fontStyle: 'italic',
-                    color: outcome === 'player2' ? '#4ade80' : outcome === 'player1' ? '#f87171' : '#fff',
+                    color: outcome === 'player2' ? '#60a5fa' : outcome === 'player1' ? '#f87171' : '#fff',
                     lineHeight: 1,
                   }}
                 >
@@ -262,7 +262,7 @@ export async function GET(request: NextRequest) {
                   gap: 10,
                   width: '100%',
                   padding: '18px 32px',
-                  backgroundColor: '#4ade80',
+                  backgroundColor: '#60a5fa',
                   borderRadius: 14,
                 }}
               >
@@ -300,7 +300,7 @@ export async function GET(request: NextRequest) {
             style={{
               width: 80,
               height: 80,
-              backgroundColor: '#4ade80',
+              backgroundColor: '#60a5fa',
               borderRadius: 16,
               display: 'flex',
               alignItems: 'center',

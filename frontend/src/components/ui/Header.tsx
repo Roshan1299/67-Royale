@@ -102,7 +102,7 @@ export function Header({ showNav = true }: HeaderProps) {
               href="/leaderboard"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
                 isLeaderboardPage
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -114,7 +114,7 @@ export function Header({ showNav = true }: HeaderProps) {
               href="/"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
                 !isDuelPage && !isPvpPage && !isLeaderboardPage && !isTournamentPage
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -124,7 +124,7 @@ export function Header({ showNav = true }: HeaderProps) {
               href="/pvp"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
                 isPvpPage
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -134,7 +134,7 @@ export function Header({ showNav = true }: HeaderProps) {
               href="/duel"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
                 isDuelPage
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -144,7 +144,7 @@ export function Header({ showNav = true }: HeaderProps) {
               href="/tournament"
               className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all relative ${
                 isTournamentPage
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -161,8 +161,8 @@ export function Header({ showNav = true }: HeaderProps) {
         <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3">
           {playerCount !== null && playerCount > 0 && (
             <div className="hidden sm:flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40 bg-black/50 px-3 py-1.5 rounded-full border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent-green"></span>
-              <span className="text-accent-green font-medium">{playerCount.toLocaleString()}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-blue"></span>
+              <span className="text-accent-blue font-medium">{playerCount.toLocaleString()}</span>
               <span>users</span>
             </div>
           )}
@@ -182,7 +182,7 @@ export function Header({ showNav = true }: HeaderProps) {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center justify-center rounded-full border border-white/10 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-accent-green/50 overflow-hidden"
+                className="flex items-center justify-center rounded-full border border-white/10 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-accent-blue/50 overflow-hidden"
                 style={{ width: 32, height: 32 }}
                 aria-label="User menu"
               >
@@ -195,8 +195,8 @@ export function Header({ showNav = true }: HeaderProps) {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-full h-full bg-accent-green/20 flex items-center justify-center">
-                    <span className="text-accent-green font-bold text-xs">{initials}</span>
+                  <div className="w-full h-full bg-accent-blue/20 flex items-center justify-center">
+                    <span className="text-accent-blue font-bold text-xs">{initials}</span>
                   </div>
                 )}
               </button>

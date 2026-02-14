@@ -86,7 +86,7 @@ export function LegalModal({ open, activeDoc, onDocChange, onClose, children }: 
               onClick={() => onDocChange('terms')}
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
                 activeDoc === 'terms'
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/50 hover:text-white/80'
               }`}
             >
@@ -96,7 +96,7 @@ export function LegalModal({ open, activeDoc, onDocChange, onClose, children }: 
               onClick={() => onDocChange('privacy')}
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
                 activeDoc === 'privacy'
-                  ? 'bg-accent-green text-black'
+                  ? 'bg-accent-blue text-black'
                   : 'text-white/50 hover:text-white/80'
               }`}
             >

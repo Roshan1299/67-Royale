@@ -24,7 +24,7 @@ export default function LeaderboardPage() {
                 <button
                   onClick={() => setTab('solo')}
                   className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all ${
-                    tab === 'solo' ? 'bg-accent-green text-black' : 'text-white/50 hover:text-white'
+                    tab === 'solo' ? 'bg-accent-blue text-black' : 'text-white/50 hover:text-white'
                   }`}
                 >
                   Solo
@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
                 <button
                   onClick={() => setTab('pvp')}
                   className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all ${
-                    tab === 'pvp' ? 'bg-accent-green text-black' : 'text-white/50 hover:text-white'
+                    tab === 'pvp' ? 'bg-accent-blue text-black' : 'text-white/50 hover:text-white'
                   }`}
                 >
                   PvP
@@ -84,7 +84,7 @@ function SoloTab() {
               key={id}
               onClick={() => setSelectedDuration(id)}
               className={`flex-1 py-1 px-2 rounded text-xs font-semibold transition-all ${
-                selectedDuration === id ? 'bg-accent-green text-black' : 'text-white/50 hover:text-white'
+                selectedDuration === id ? 'bg-accent-blue text-black' : 'text-white/50 hover:text-white'
               }`}
             >
               {label}
@@ -100,7 +100,7 @@ function SoloTab() {
         ) : error ? (
           <div className="p-6 text-center">
             <p className="text-red-400 text-xs mb-2">{error}</p>
-            <button onClick={refresh} className="text-accent-green text-xs hover:underline">Try again</button>
+            <button onClick={refresh} className="text-accent-blue text-xs hover:underline">Try again</button>
           </div>
         ) : entries.length === 0 ? (
           <div className="p-6 text-center">
@@ -143,7 +143,7 @@ function SoloTab() {
 
               {/* Score */}
               <div className="flex-shrink-0 text-right">
-                <span className={`text-sm font-bold tabular-nums ${entry.rank <= 3 ? 'text-accent-green' : 'text-white/80'}`}>
+                <span className={`text-sm font-bold tabular-nums ${entry.rank <= 3 ? 'text-accent-blue' : 'text-white/80'}`}>
                   {is67Reps ? (entry.score / 1000).toFixed(2) : entry.score}
                 </span>
                 {is67Reps && <span className="text-white/30 text-xs ml-0.5">s</span>}
@@ -173,7 +173,7 @@ function PvpTab() {
         ) : error ? (
           <div className="p-6 text-center">
             <p className="text-red-400 text-xs mb-2">{error}</p>
-            <button onClick={refresh} className="text-accent-green text-xs hover:underline">Try again</button>
+            <button onClick={refresh} className="text-accent-blue text-xs hover:underline">Try again</button>
           </div>
         ) : entries.length === 0 ? (
           <div className="p-6 text-center">

@@ -337,7 +337,7 @@ export class BrainrotDetector {
 
         // MediaPipe "Right" = user's left hand (mirrored camera)
         const isLeft = handedness.label === "Right";
-        const color = isLeft ? "#FF6B6B" : "#4ECDC4";
+        const color = isLeft ? "#FF6B6B" : "#60a5fa";
 
         drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {
           color: color,

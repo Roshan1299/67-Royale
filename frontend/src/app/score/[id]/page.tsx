@@ -143,9 +143,9 @@ export default function ScorePage() {
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle green radial glow at top
+    // Subtle blue radial glow at top
     const gradient = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, 300);
-    gradient.addColorStop(0, 'rgba(74, 222, 128, 0.08)');
+    gradient.addColorStop(0, 'rgba(96, 165, 250, 0.08)');
     gradient.addColorStop(1, 'transparent');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
@@ -184,7 +184,7 @@ export default function ScorePage() {
     const iconY = headerY + 14;
     const iconSize = 24;
     
-    ctx.strokeStyle = '#4ade80';
+    ctx.strokeStyle = '#60a5fa';
     ctx.lineWidth = 2;
     
     if (scoreData.duration_ms === DURATION_67_REPS) {
@@ -200,13 +200,13 @@ export default function ScorePage() {
       ctx.arc(cx, cy, 5, 0, Math.PI * 2);
       ctx.stroke();
       // Center dot
-      ctx.fillStyle = '#4ade80';
+      ctx.fillStyle = '#60a5fa';
       ctx.beginPath();
       ctx.arc(cx, cy, 2, 0, Math.PI * 2);
       ctx.fill();
     } else if (scoreData.duration_ms === DURATION_6_7S) {
       // Bolt icon for 6.7s Sprint
-      ctx.fillStyle = '#4ade80';
+      ctx.fillStyle = '#60a5fa';
       ctx.beginPath();
       ctx.moveTo(iconX + 14, iconY + 2);
       ctx.lineTo(iconX + 6, iconY + 12);
@@ -232,7 +232,7 @@ export default function ScorePage() {
     }
 
     // Mode label
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = '#60a5fa';
     ctx.font = '500 16px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -266,7 +266,7 @@ export default function ScorePage() {
     
     // Draw score with slant transform for italic effect
     ctx.save();
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = '#60a5fa';
     ctx.font = '900 88px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     
@@ -299,7 +299,7 @@ export default function ScorePage() {
       const totalBoxWidth = boxW * 3 + boxGap * 2;
       const startX = (width - totalBoxWidth) / 2;
 
-      const drawRankBox = (x: number, label: string, value: string, isGreen: boolean = false) => {
+      const drawRankBox = (x: number, label: string, value: string, isBlue: boolean = false) => {
         // Box background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
@@ -317,7 +317,7 @@ export default function ScorePage() {
         ctx.fillText(label.toUpperCase(), x + boxW / 2, boxY + 10);
 
         // Value
-        ctx.fillStyle = isGreen ? '#4ade80' : '#fff';
+        ctx.fillStyle = isBlue ? '#60a5fa' : '#fff';
         ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
         ctx.textBaseline = 'bottom';
         ctx.fillText(value, x + boxW / 2, boxY + boxH - 8);
@@ -334,7 +334,7 @@ export default function ScorePage() {
     const ctaX = cardX + 20;
     const ctaW = cardW - 40;
 
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = '#60a5fa';
     ctx.beginPath();
     ctx.roundRect(ctaX, ctaY, ctaW, ctaH, 12);
     ctx.fill();
@@ -357,7 +357,7 @@ export default function ScorePage() {
     return (
       <main className="min-h-screen bg-bg-primary bg-grid-pattern bg-gradient-radial flex items-center justify-center pb-12">
         <div className="flex items-center gap-2 text-white/40">
-          <div className="w-4 h-4 border-2 border-white/20 border-t-accent-green rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-white/20 border-t-accent-blue rounded-full animate-spin" />
           <span className="text-sm">Loading...</span>
         </div>
       </main>
@@ -406,7 +406,7 @@ export default function ScorePage() {
             <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getModeIcon()}
-                <span className="text-xs text-accent-green font-medium">
+                <span className="text-xs text-accent-blue font-medium">
                   {formatDuration(scoreData.duration_ms)}
                 </span>
               </div>
@@ -426,7 +426,7 @@ export default function ScorePage() {
               
               {/* Score */}
               <div className="mb-4">
-                <span className="score-display text-7xl lg:text-8xl text-accent-green">
+                <span className="score-display text-7xl lg:text-8xl text-accent-blue">
                   {formatScore(scoreData.score, scoreData.duration_ms)}
                 </span>
                 <span className="text-2xl text-white/30 ml-2">
@@ -447,7 +447,7 @@ export default function ScorePage() {
                   </div>
                   <div className="flex-1 max-w-[100px] p-2 bg-white/5 rounded-lg border border-white/10">
                     <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Top</p>
-                    <p className="text-sm font-bold text-accent-green">{scoreData.percentile}%</p>
+                    <p className="text-sm font-bold text-accent-blue">{scoreData.percentile}%</p>
                   </div>
                 </div>
               )}

@@ -611,7 +611,7 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
                     <span className="text-yellow-400 font-medium">⚠ Keep hands level</span>
                   )}
                   {trackingState?.bothHandsDetected && handsLevel && (
-                    <span className="text-green-400 font-medium animate-pulse">✓ Hold steady...</span>
+                    <span className="text-accent-blue font-medium animate-pulse">✓ Hold steady...</span>
                   )}
                 </div>
               </div>

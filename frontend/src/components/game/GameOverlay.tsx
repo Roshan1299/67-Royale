@@ -37,7 +37,7 @@ export function GameOverlay({
       <div className="flex justify-center pt-2 sm:pt-4">
         <div className="glass-panel px-4 sm:px-6 py-2 sm:py-3 rounded-full flex items-center gap-1.5 sm:gap-2">
           <span className={`text-2xl sm:text-4xl font-bold tabular-nums ${
-            is67RepsMode && repCount >= 60 ? 'text-accent-green' : 'text-white'
+            is67RepsMode && repCount >= 60 ? 'text-accent-blue' : 'text-white'
           }`} style={{ fontStyle: 'italic' }}>
             {repCount}
           </span>
@@ -63,11 +63,11 @@ export function GameOverlay({
         </div>
       ) : isNearFinish ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="glass-panel px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-accent-green/30">
-            <p className="text-accent-green text-2xl sm:text-3xl font-bold text-center tabular-nums" style={{ fontStyle: 'italic' }}>
+          <div className="glass-panel px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-accent-blue/30">
+            <p className="text-accent-blue text-2xl sm:text-3xl font-bold text-center tabular-nums" style={{ fontStyle: 'italic' }}>
               {repsToGo}
             </p>
-            <p className="text-accent-green/60 text-xs sm:text-sm text-center font-mono uppercase tracking-wider">
+            <p className="text-accent-blue/60 text-xs sm:text-sm text-center font-mono uppercase tracking-wider">
               to go
             </p>
           </div>
