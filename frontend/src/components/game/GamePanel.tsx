@@ -89,24 +89,29 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
   // Initialize camera and MediaPipe
   const initializeCamera = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
-    
+
     try {
       setCameraError(null);
-      
+
       const tracker = new HandTracker();
       trackerRef.current = tracker;
-      calibrationTrackerRef.current = new CalibrationTracker();
-      
+
+      const calibrationTracker = new CalibrationTracker();
+      calibrationTrackerRef.current = calibrationTracker;
+
+      // Link calibration tracker to hand tracker
+      calibrationTracker.setTracker(tracker);
+
       await tracker.initialize(
         videoRef.current,
         canvasRef.current,
         (state) => setTrackingState(state)
       );
-      
+
       tracker.start();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to initialize camera';
-      
+
       if (message.includes('Permission denied') || message.includes('NotAllowedError')) {
         setCameraError('Camera permission denied. Please allow camera access and reload the page.');
       } else if (message.includes('NotFoundError')) {
