@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { LegalFooter } from "@/components/ui/LegalFooter";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,8 +44,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased bg-bg-primary font-sans">
-        {children}
-        <LegalFooter />
+        <AuthProvider>
+          {children}
+          <LegalFooter />
+        </AuthProvider>
       </body>
     </html>
   );
