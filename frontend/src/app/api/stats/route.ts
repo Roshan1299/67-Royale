@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Get total number of games played (both solo and duel scores are in the scores table)
-    const { count: totalGames, error: gamesError } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true });
-
-    if (gamesError) {
-      console.error('Database error:', gamesError);
-      return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
-    }
+    const snap = await db.collection('scores').count().get();
+    const totalGames = snap.data().count;
 
     return NextResponse.json({
       totalGames: totalGames || 0

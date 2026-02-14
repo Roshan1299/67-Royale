@@ -1,33 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionToken, validateSubmissionTiming } from '@/lib/jwt';
-import { validateUsername } from '@/lib/profanity';
 import { checkRateLimit, createRateLimitKey } from '@/lib/rate-limit';
-import { createServerClient } from '@/lib/supabase/server';
+import { getDb } from '@/lib/firebase/server';
+import { verifyAuthToken } from '@/lib/firebase/server';
 import { DURATION_6_7S, DURATION_20S, DURATION_67_REPS, is67RepsMode } from '@/types/game';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, username, score } = body;
+    const { token, score } = body;
 
     // Validate required fields
     if (!token || typeof token !== 'string') {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 });
     }
 
-    if (!username || typeof username !== 'string') {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
-    }
-
     if (typeof score !== 'number' || score < 0 || !Number.isInteger(score)) {
       return NextResponse.json({ error: 'Score must be a non-negative integer' }, { status: 400 });
     }
 
-    // Validate username
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.valid) {
-      return NextResponse.json({ error: usernameValidation.reason }, { status: 400 });
+    // Verify Firebase auth token to get user identity
+    const authUser = await verifyAuthToken(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+
+    const { uid, displayName: username, photoURL } = authUser;
 
     // Verify JWT token
     const payload = await verifySessionToken(token);
@@ -76,74 +74,68 @@ export async function POST(request: NextRequest) {
     // Insert score into database
     // For 67 reps mode, score is elapsed time in ms
     // For timed modes, score is rep count
-    const supabase = createServerClient();
-    const { data, error: dbError } = await supabase
-      .from('scores')
-      .insert({
-        username,
-        score,
-        duration_ms: payload.duration_ms
-      })
-      .select('id')
-      .single();
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      return NextResponse.json({ error: 'Failed to save score' }, { status: 500 });
-    }
+    const db = getDb();
+    const docRef = await db.collection('scores').add({
+      username,
+      uid,
+      photoURL,
+      score,
+      duration_ms: payload.duration_ms,
+      created_at: new Date().toISOString(),
+    });
+    const scoreId = docRef.id;
 
     // Calculate ranks and percentile
-    // is67Reps is already defined earlier in the function
-    
     // Get total count for all-time
-    const { count: totalCount } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true })
-      .eq('duration_ms', payload.duration_ms);
+    const totalCountSnap = await db.collection('scores')
+      .where('duration_ms', '==', payload.duration_ms)
+      .count()
+      .get();
+    const totalCount = totalCountSnap.data().count;
 
     // Get all-time rank (count of better scores + 1)
     let allTimeRank = 1;
     if (is67Reps) {
-      const { count: betterScores } = await supabase
-        .from('scores')
-        .select('*', { count: 'exact', head: true })
-        .eq('duration_ms', payload.duration_ms)
-        .lt('score', score);
-      allTimeRank = (betterScores || 0) + 1;
+      const betterSnap = await db.collection('scores')
+        .where('duration_ms', '==', payload.duration_ms)
+        .where('score', '<', score)
+        .count()
+        .get();
+      allTimeRank = betterSnap.data().count + 1;
     } else {
-      const { count: betterScores } = await supabase
-        .from('scores')
-        .select('*', { count: 'exact', head: true })
-        .eq('duration_ms', payload.duration_ms)
-        .gt('score', score);
-      allTimeRank = (betterScores || 0) + 1;
+      const betterSnap = await db.collection('scores')
+        .where('duration_ms', '==', payload.duration_ms)
+        .where('score', '>', score)
+        .count()
+        .get();
+      allTimeRank = betterSnap.data().count + 1;
     }
 
     // Get daily rank (past 24 hours)
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     let dailyRank = 1;
     if (is67Reps) {
-      const { count: betterDailyScores } = await supabase
-        .from('scores')
-        .select('*', { count: 'exact', head: true })
-        .eq('duration_ms', payload.duration_ms)
-        .gte('created_at', twentyFourHoursAgo)
-        .lt('score', score);
-      dailyRank = (betterDailyScores || 0) + 1;
+      const betterDailySnap = await db.collection('scores')
+        .where('duration_ms', '==', payload.duration_ms)
+        .where('created_at', '>=', twentyFourHoursAgo)
+        .where('score', '<', score)
+        .count()
+        .get();
+      dailyRank = betterDailySnap.data().count + 1;
     } else {
-      const { count: betterDailyScores } = await supabase
-        .from('scores')
-        .select('*', { count: 'exact', head: true })
-        .eq('duration_ms', payload.duration_ms)
-        .gte('created_at', twentyFourHoursAgo)
-        .gt('score', score);
-      dailyRank = (betterDailyScores || 0) + 1;
+      const betterDailySnap = await db.collection('scores')
+        .where('duration_ms', '==', payload.duration_ms)
+        .where('created_at', '>=', twentyFourHoursAgo)
+        .where('score', '>', score)
+        .count()
+        .get();
+      dailyRank = betterDailySnap.data().count + 1;
     }
 
     const percentile = totalCount ? Math.round((allTimeRank / totalCount) * 100) : 1;
 
     return NextResponse.json({ 
-      scoreId: data.id,
+      scoreId,
       dailyRank,
       allTimeRank,
       percentile,
