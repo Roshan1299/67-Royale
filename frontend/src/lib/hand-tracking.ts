@@ -20,7 +20,6 @@ import {
   getBackend,
   shouldShowBackendWarning,
   isReady,
-  getInitState,
   KeypointIndices,
   type NormalizedLandmark,
   type NormalizedLandmarkList,
@@ -445,7 +444,6 @@ export class RepCounter {
     // Get previous state
     const lastY = isLeft ? this.lastLeftY : this.lastRightY;
     const lastTimestamp = isLeft ? this.lastLeftTimestamp : this.lastRightTimestamp;
-    const lastX = isLeft ? this.lastLeftX : this.lastRightX;
 
     // Initialize if first valid frame
     if (lastY === null) {
@@ -546,7 +544,8 @@ export class RepCounter {
     return this.processSignals(leftSignal, rightSignal, now);
   }
   
-  // Legacy method for compatibility
+  // Legacy method for compatibility (params kept for interface compatibility)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   processFrame(leftLandmarks: NormalizedLandmarkList | null, rightLandmarks: NormalizedLandmarkList | null): boolean {
     return false;
   }
@@ -637,7 +636,7 @@ export class HandTracker {
     this.sendState();
     
     // Initialize MoveNet with progress callback
-    const { backend } = await initPose((state, message) => {
+    await initPose((state, message) => {
       this.currentInitState = state;
       console.log(`[HandTracker] ${message}`);
       this.sendState();
@@ -819,6 +818,7 @@ export class HandTracker {
   /**
    * Process gameplay frame - uses WristSignal adapter and improved RepCounter.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   processGameplay(leftLandmarks: NormalizedLandmarkList | null, rightLandmarks: NormalizedLandmarkList | null): boolean {
     if (!this.lastPoseFrame?.poseLandmarks) return false;
     

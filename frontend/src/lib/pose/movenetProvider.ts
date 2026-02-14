@@ -64,8 +64,6 @@ const WARMUP_RUNS = 3;
 // Frame skipping thresholds
 const FPS_CHECK_INTERVAL = 2000; // Check FPS every 2 seconds
 const LOW_FPS_THRESHOLD = 20;
-const TARGET_INFERENCE_FPS = 30; // Target 30fps inference on mobile
-
 // ============================================================================
 // MODULE STATE
 // ============================================================================
@@ -293,9 +291,6 @@ export async function estimatePose(
   if (skipFrames > 0 && frameCount % (skipFrames + 1) !== 0) {
     return lastPoseFrame;
   }
-
-  const videoWidth = videoEl.videoWidth || 640;
-  const videoHeight = videoEl.videoHeight || 480;
 
   try {
     // Preprocess: resize to model input size and cast to int32
