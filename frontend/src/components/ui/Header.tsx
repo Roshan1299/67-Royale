@@ -16,6 +16,7 @@ export function Header({ showNav = true }: HeaderProps) {
   const [playerCount, setPlayerCount] = useState<number | null>(null);
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [trophies, setTrophies] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,25 @@ export function Header({ showNav = true }: HeaderProps) {
     };
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setTrophies(null);
+      return;
+    }
+    const fetchTrophies = async () => {
+      try {
+        const res = await fetch(`/api/user/stats?uid=${user.uid}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTrophies(data.trophies ?? 0);
+        }
+      } catch {
+        // Silently fail
+      }
+    };
+    fetchTrophies();
+  }, [user?.uid]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -108,6 +128,16 @@ export function Header({ showNav = true }: HeaderProps) {
               <span className="w-1.5 h-1.5 rounded-full bg-accent-green"></span>
               <span className="text-accent-green font-medium">{playerCount.toLocaleString()}</span>
               <span>users</span>
+            </div>
+          )}
+
+          {/* Trophy count */}
+          {user && trophies !== null && (
+            <div className="flex items-center gap-1 text-xs font-bold" style={{ color: '#FFD700' }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 3h14v2H5V3zm0 2v4c0 3.87 3.13 7 7 7s7-3.13 7-7V5h3v4a4 4 0 01-3 3.87V15h1v2H9v-2h1v-2.13A4 4 0 017 9V5H5zm2 0v4c0 2.76 2.24 5 5 5s5-2.24 5-5V5H7zm2 14h6v2H9v-2z"/>
+              </svg>
+              <span>{trophies}</span>
             </div>
           )}
 

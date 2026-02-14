@@ -49,3 +49,7 @@ export interface ChallengeEntry {
   score: number;
   submitted_at: string;
 }
+
+export interface UserStats {
+  trophies: number;
+}

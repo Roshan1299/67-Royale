@@ -1,5 +1,5 @@
 /**
- * MoveNet Provider for 67Ranked
+ * MoveNet Provider for 67 Royale
  * 
  * Loads MoveNet model directly from TFHub using tfjs-converter,
  * avoiding the pose-detection package's MediaPipe dependencies.

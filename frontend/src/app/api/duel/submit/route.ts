@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase/server';
 import { verifySessionToken, validateSubmissionTiming } from '@/lib/jwt';
 import { checkRateLimit, createRateLimitKey } from '@/lib/rate-limit';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
+import { FieldValue } from 'firebase-admin/firestore';
 
 // Helper to calculate rank stats for a score
 async function calculateRankStats(
@@ -209,6 +210,56 @@ export async function POST(request: NextRequest) {
           opponentRankStats = await calculateRankStats(duel.duration_ms, opponent.score, !!is67Reps);
         } catch (err) {
           console.error('Opponent rank stats failed (missing index?):', err);
+        }
+      }
+
+      // Update trophies for matchmade (PvP) duels (use trophies_awarded flag to prevent double-award race condition)
+      if (duel && (duel as Record<string, unknown>).matchmade === true && !(duel as Record<string, unknown>).trophies_awarded && myPlayer && opponent) {
+        // Atomically set trophies_awarded to prevent the other submitter from also awarding
+        const duelRef = db.collection('duels').doc(payload.duel_id);
+        const txResult = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(duelRef);
+          if (snap.data()?.trophies_awarded) return false;
+          tx.update(duelRef, { trophies_awarded: true });
+          return true;
+        });
+        if (txResult) try {
+          const TROPHY_WIN = 30;
+          const TROPHY_LOSE = -15;
+
+          const getPlayerOutcome = (p1Score: number | null, p2Score: number | null): number => {
+            if (p1Score === null || p2Score === null) return 0;
+            if (is67Reps) {
+              if (p1Score < p2Score) return TROPHY_WIN;
+              if (p1Score > p2Score) return TROPHY_LOSE;
+            } else {
+              if (p1Score > p2Score) return TROPHY_WIN;
+              if (p1Score < p2Score) return TROPHY_LOSE;
+            }
+            return 0; // tie
+          };
+
+          const myDelta = getPlayerOutcome(myPlayer.score, opponent.score);
+          const opponentDelta = getPlayerOutcome(opponent.score, myPlayer.score);
+
+          const updateTrophies = async (uid: string, delta: number) => {
+            if (delta === 0) return;
+            const ref = db.collection('user_stats').doc(uid);
+            if (delta > 0) {
+              await ref.set({ trophies: FieldValue.increment(delta) }, { merge: true });
+            } else {
+              // Floor at 0: read current value, then set
+              const snap = await ref.get();
+              const current = snap.exists ? (snap.data()?.trophies ?? 0) : 0;
+              const newVal = Math.max(0, current + delta);
+              await ref.set({ trophies: newVal }, { merge: true });
+            }
+          };
+
+          if (myPlayer.uid) await updateTrophies(myPlayer.uid, myDelta);
+          if (opponent.uid) await updateTrophies(opponent.uid, opponentDelta);
+        } catch (err) {
+          console.error('Trophy update failed:', err);
         }
       }
 
