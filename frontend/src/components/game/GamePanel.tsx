@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { GameState, GameMode, DURATION_6_7S, DURATION_67_REPS, is67RepsMode } from '@/types/game';
+import { useAuth } from '@/contexts/AuthContext';
+import { GameState, GameMode, DURATION_6_7S, is67RepsMode } from '@/types/game';
 import { HandTracker, TrackingState, CalibrationTracker } from '@/lib/hand-tracking';
 import { StartScreen } from './StartScreen';
 import { CalibrationOverlay } from './CalibrationOverlay';
@@ -15,6 +16,8 @@ interface GamePanelProps {
 }
 
 export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
+  const { getIdToken } = useAuth();
+
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -159,6 +162,8 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
+  // startCountdown intentionally omitted to avoid effect re-running every render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, trackingState]);
 
   // Handle mode selection
@@ -394,19 +399,22 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
   };
 
   // Submit score
-  const handleSubmit = async (username: string) => {
+  const handleSubmit = async () => {
     if (!sessionTokenRef.current) return;
     
     setIsSubmitting(true);
     setSubmitError(null);
     
     try {
+      const idToken = await getIdToken();
       const response = await fetch('/api/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           token: sessionTokenRef.current,
-          username,
           score: finalScore
         })
       });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { GameMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS, MIN_CUSTOM_DURATION, MAX_CUSTOM_DURATION } from '@/types/game';
 
 interface ModeSelectorProps {
@@ -43,24 +43,35 @@ const CheckIcon = () => (
   </svg>
 );
 
+function getInitialDuration(): number {
+  if (typeof window === 'undefined') return DURATION_6_7S;
+  const s = localStorage.getItem('67ranked_lastDuration');
+  if (!s) return DURATION_6_7S;
+  const d = parseInt(s, 10);
+  return Number.isNaN(d) ? DURATION_6_7S : d;
+}
+
+function getInitialCustomSeconds(): string {
+  if (typeof window === 'undefined') return '10.0';
+  const s = localStorage.getItem('67ranked_lastDuration');
+  if (!s) return '10.0';
+  const d = parseInt(s, 10);
+  return Number.isNaN(d) ? '10.0' : (d / 1000).toFixed(1);
+}
+
+function getInitialShowCustom(): boolean {
+  if (typeof window === 'undefined') return false;
+  const s = localStorage.getItem('67ranked_lastDuration');
+  if (!s) return false;
+  const d = parseInt(s, 10);
+  return d !== DURATION_6_7S && d !== DURATION_20S && d !== DURATION_67_REPS;
+}
+
 export function ModeSelector({ onSelect, onCancel }: ModeSelectorProps) {
   const [mode] = useState<GameMode>('normal'); // Always normal mode on solo page
-  const [duration, setDuration] = useState<number>(DURATION_6_7S);
-  const [customSeconds, setCustomSeconds] = useState<string>('10.0');
-  const [showCustom, setShowCustom] = useState(false);
-
-  useEffect(() => {
-    // Only restore duration, not mode (mode is determined by page)
-    const savedDuration = localStorage.getItem('67ranked_lastDuration');
-    if (savedDuration) {
-      const d = parseInt(savedDuration, 10);
-      setDuration(d);
-      if (d !== DURATION_6_7S && d !== DURATION_20S && d !== DURATION_67_REPS) {
-        setShowCustom(true);
-        setCustomSeconds((d / 1000).toFixed(1));
-      }
-    }
-  }, []);
+  const [duration, setDuration] = useState<number>(getInitialDuration);
+  const [customSeconds, setCustomSeconds] = useState<string>(getInitialCustomSeconds);
+  const [showCustom, setShowCustom] = useState<boolean>(getInitialShowCustom);
 
   const handleDurationSelect = (ms: number) => {
     setDuration(ms);

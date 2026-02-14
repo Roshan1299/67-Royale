@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { GameResult, DURATION_6_7S, DURATION_20S, DURATION_67_REPS, is67RepsMode } from '@/types/game';
 
 interface EndScreenProps {
@@ -8,7 +9,7 @@ interface EndScreenProps {
   duration: number;
   elapsedTime?: number;
   mode: 'normal' | 'duel' | 'challenge';
-  onSubmit: (username: string) => Promise<void>;
+  onSubmit: () => Promise<void>;
   onPlayAgain: () => void;
   onRematch?: () => void;
   isSubmitting?: boolean;
@@ -64,46 +65,17 @@ export function EndScreen({
   allTimeRank,
   percentile
 }: EndScreenProps) {
-  const [username, setUsername] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const { user } = useAuth();
   const [shareError, setShareError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const savedUsername = localStorage.getItem('67ranked_lastUsername');
-    if (savedUsername) setUsername(savedUsername);
-  }, []);
+  const displayName = user?.displayName || 'Anonymous';
 
   const is67Reps = is67RepsMode(duration);
   const canSubmitToLeaderboard = mode === 'normal' && 
     (duration === DURATION_6_7S || duration === DURATION_20S || is67Reps);
 
-  const validateUsername = (value: string): boolean => {
-    if (!value || value.length < 1) {
-      setValidationError('Required');
-      return false;
-    }
-    if (value.length > 20) {
-      setValidationError('Max 20 characters');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-      setValidationError('Letters, numbers, _ only');
-      return false;
-    }
-    setValidationError(null);
-    return true;
-  };
-
-  const handleUsernameChange = (value: string) => {
-    setUsername(value);
-    if (validationError) validateUsername(value);
-  };
-
   const handleSubmit = async () => {
-    if (validateUsername(username)) {
-      localStorage.setItem('67ranked_lastUsername', username);
-      await onSubmit(username);
-    }
+    await onSubmit();
   };
 
   const formatDuration = (ms: number) => {
@@ -123,9 +95,10 @@ export function EndScreen({
       return;
     }
 
+    const playerName = displayName;
     const shareText = is67Reps
-      ? `${username || 'I'} got 67 reps in ${formatElapsedTime(elapsedTime || 0)}s on 67ranked.com`
-      : `${username || 'I'} scored ${result.myScore} reps on 67ranked.com`;
+      ? `${playerName} got 67 reps in ${formatElapsedTime(elapsedTime || 0)}s on 67ranked.com`
+      : `${playerName} scored ${result.myScore} reps on 67ranked.com`;
     
     const shareUrl = scoreId 
       ? `${window.location.origin}/score/${scoreId}`
@@ -142,7 +115,9 @@ export function EndScreen({
   };
 
   const handleDownload = async () => {
-    if (!isSubmitted || !username) return;
+    if (!isSubmitted) return;
+
+    const playerName = displayName;
     
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -211,7 +186,7 @@ export function EndScreen({
     ctx.font = '16px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    const displayUsername = username.length > 20 ? username.slice(0, 17) + '...' : username;
+    const displayUsername = playerName.length > 20 ? playerName.slice(0, 17) + '...' : playerName;
     ctx.fillText(displayUsername, width / 2, bodyY);
 
     // Score
@@ -289,11 +264,11 @@ export function EndScreen({
     ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`Beat ${username}'s Score @ 67ranked.com`, width / 2, ctaY + ctaH / 2);
+    ctx.fillText(`Beat ${playerName}'s Score @ 67ranked.com`, width / 2, ctaY + ctaH / 2);
 
     // Download
     const link = document.createElement('a');
-    link.download = `67ranked-${username}-${scoreStr.replace('.', '_')}.png`;
+    link.download = `67ranked-${playerName}-${scoreStr.replace('.', '_')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
@@ -390,21 +365,9 @@ export function EndScreen({
             </button>
           )}
 
-          {/* Username input */}
-          {canSubmitToLeaderboard && !isSubmitted && (
-            <div className="mb-2.5 sm:mb-3">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => handleUsernameChange(e.target.value)}
-                placeholder="Your name"
-                maxLength={20}
-                className="w-full rounded-md sm:rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-white text-center text-xs sm:text-sm"
-              />
-              {(validationError || submitError) && (
-                <p className="text-red-400 text-[9px] sm:text-[10px] mt-1 text-center">{validationError || submitError}</p>
-              )}
-            </div>
+          {/* Submit error */}
+          {canSubmitToLeaderboard && !isSubmitted && submitError && (
+            <p className="text-red-400 text-[9px] sm:text-[10px] mb-2 text-center">{submitError}</p>
           )}
 
           {/* Action buttons */}
@@ -412,9 +375,9 @@ export function EndScreen({
             {canSubmitToLeaderboard && !isSubmitted && (
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !username}
+                disabled={isSubmitting}
                 className={`w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm bg-accent-green text-black transition-all ${
-                  (isSubmitting || !username) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent-green-dark'
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent-green-dark'
                 }`}
               >
                 {isSubmitting ? 'Saving...' : 'Save Score'}
