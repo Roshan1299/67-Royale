@@ -11,6 +11,7 @@ import { CountdownOverlay } from '@/components/game/CountdownOverlay';
 import { GameOverlay } from '@/components/game/GameOverlay';
 import { Header } from '@/components/ui/Header';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
+import { useWebRTC } from '@/hooks/useWebRTC';
 
 // Icons
 const CopyIcon = () => (
@@ -113,6 +114,25 @@ export default function DuelPage() {
   const gameEndedRef = useRef(false);
   const [containerSize, setContainerSize] = useState(400);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // WebRTC state
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Determine if this client is the host (duel creator = first player in list)
+  const isHost = myPlayerKey && players.length > 0
+    ? players[0]?.player_key === myPlayerKey
+    : null;
+
+  // WebRTC hook for live opponent video
+  const { remoteStream } = useWebRTC(duelId, isHost, localStream);
+
+  // Assign remote stream to the video element
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
 
   // Keep duel ref in sync
   useEffect(() => {
@@ -517,6 +537,12 @@ export default function DuelPage() {
       );
 
       tracker.start();
+
+      // Expose the camera stream for WebRTC
+      const stream = tracker.getStream();
+      if (stream) {
+        setLocalStream(stream);
+      }
     } catch {
       setError('Failed to access camera');
       setPageState('error');
@@ -791,6 +817,28 @@ export default function DuelPage() {
             height={containerSize}
             className="absolute inset-0 w-full h-full"
         />
+
+        {/* Opponent PIP video via WebRTC */}
+        {remoteStream && (
+          <div className="absolute top-2 right-2 z-10" style={{ width: Math.round(containerSize * 0.3), height: Math.round(containerSize * 0.3) }}>
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover rounded-lg border-2 border-white/20 shadow-lg"
+              style={{ transform: 'scaleX(-1)' }}
+            />
+            {(() => {
+              const opponent = players.find(p => p.player_key !== myPlayerKey);
+              return opponent ? (
+                <p className="text-center text-white/70 text-[10px] mt-0.5 truncate font-medium drop-shadow-md">
+                  {opponent.username}
+                </p>
+              ) : null;
+            })()}
+          </div>
+        )}
 
         {pageState === 'calibrating' && calibrationTrackerRef.current && (
           <CalibrationOverlay

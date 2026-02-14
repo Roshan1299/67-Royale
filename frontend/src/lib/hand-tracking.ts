@@ -605,6 +605,11 @@ export class HandTracker {
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private stream: MediaStream | null = null;
   private animationFrameId: number | null = null;
+
+  /** Expose the camera MediaStream so it can be shared (e.g. with WebRTC). */
+  public getStream(): MediaStream | null {
+    return this.stream;
+  }
   private isRunning = false;
   
   private repCounter = new RepCounter();
