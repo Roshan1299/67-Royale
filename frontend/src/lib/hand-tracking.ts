@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * MediaPipe Hand Tracking Adapter for 67Ranked
  *

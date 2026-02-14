@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * BrainrotDetector - MediaPipe Hands-based 67 motion detector
  *
@@ -21,7 +23,7 @@ export type Results = {
   multiHandedness?: Array<{ label: string; score: number }>;
 };
 
-// MediaPipe instances will be loaded dynamically
+// MediaPipe instances will be loaded dynamically (client-side only)
 let Hands: any = null;
 let HAND_CONNECTIONS: any = null;
 let drawConnectors: any = null;
@@ -151,6 +153,7 @@ export class BrainrotDetector {
 
   private async loadMediaPipe(): Promise<void> {
     if (Hands) return; // Already loaded
+    if (typeof window === 'undefined') return; // Skip during SSR
 
     // Dynamic import for client-side only
     const handsModule = await import("@mediapipe/hands");
