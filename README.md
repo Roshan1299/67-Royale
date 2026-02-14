@@ -4,6 +4,16 @@ A competitive, real-time hand motion tracking game built with computer vision. P
 
 Built for SillyCon Valley Hacks, inspired by the viral TikTok "6-7 brainrot" trend.
 
+## Screenshots
+
+| Landing Page | Solo Gameplay | Leaderboard |
+|:---:|:---:|:---:|
+| ![Landing Page](screenshots/landing%20page.png) | ![PvP Mode](screenshots/pvp.png) | ![Leaderboard](screenshots/leaderboard.png) |
+
+| PvP 1v1 | Create Lobby | Lobby |
+|:---:|:---:|:---:|
+| ![1v1 Match](screenshots/1v1.png) | ![Create Lobby](screenshots/creat_lobby.jpg) | ![Lobby](screenshots/lobby.png) |
+
 ## Overview
 
 67 Royale uses MediaPipe Hands to track hand movements through your webcam in real-time. The game detects when you alternate raising your left and right hands, counting each successful rep while enforcing anti-cheat measures to ensure legitimate gameplay.
