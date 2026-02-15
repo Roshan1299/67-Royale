@@ -12,7 +12,7 @@ Built for SillyCon Valley Hacks, inspired by the viral TikTok "6-7 brainrot" tre
 
 | PvP 1v1 | Create Lobby | Lobby |
 |:---:|:---:|:---:|
-| ![1v1 Match](screenshots/1v1.png) | ![Create Lobby](screenshots/creat_lobby.jpg) | ![Lobby](screenshots/lobby.png) |
+| ![1v1 Match](screenshots/1v1.png) | ![Create Lobby](screenshots/create_lobby.png) | ![Lobby](screenshots/lobby.png) |
 
 ## Overview
 
