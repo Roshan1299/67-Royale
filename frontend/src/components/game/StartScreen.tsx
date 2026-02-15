@@ -42,41 +42,58 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
   }
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2">
-      <div className="text-center px-2 sm:px-4 animate-fade-in">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden blue-glow">
-            <Image
-              src={iconImage}
-              alt="67 Royale"
-              width={56}
-              height={56}
-              className="w-full h-full object-cover"
-            />
+    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/80 via-black/70 to-black/90 backdrop-blur-md p-4">
+      <div className="text-center max-w-md animate-fade-in">
+        {/* Logo Icon */}
+        <div className="flex justify-center mb-4 sm:mb-5">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/30 to-purple-500/30 rounded-2xl blur-xl"></div>
+            <div className="relative w-full h-full rounded-2xl overflow-hidden">
+              <Image
+                src={iconImage}
+                alt="67 Royale"
+                width={80}
+                height={80}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">ROYALE</h1>
         </div>
-        
+
+        {/* Title */}
+        <div className="mb-3 sm:mb-4">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-widest">
+            ROYALE
+          </h1>
+        </div>
+
         {/* Tagline */}
-        <p className="text-white/40 mb-6 sm:mb-10 text-xs sm:text-sm font-mono uppercase tracking-wider">
-          How fast can you 67?
+        <p className="text-white/50 mb-8 sm:mb-10 text-sm sm:text-base font-medium">
+          Prove your speed. Dominate the leaderboard.
         </p>
-        
+
         {/* Start Button */}
-        <button
-          onClick={onStart}
-          className="btn-primary text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-4 animate-pulse-glow"
-        >
-          <PlayIcon />
-          START
-        </button>
-        
+        <div className="relative inline-block group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-accent-blue via-cyan-400 to-accent-blue rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-300 animate-pulse"></div>
+          <button
+            onClick={onStart}
+            className="relative flex items-center gap-3 px-10 sm:px-14 py-4 sm:py-5 bg-black rounded-xl text-white font-black text-lg sm:text-xl tracking-wide hover:scale-105 transition-transform duration-200"
+          >
+            <PlayIcon />
+            <span>START</span>
+          </button>
+        </div>
+
         {/* Instructions */}
-        <div className="mt-6 sm:mt-10 max-w-xs mx-auto">
-          <p className="text-white/30 text-[10px] sm:text-xs font-mono uppercase tracking-wider">
-            Alternate your hands up and down to count reps
-          </p>
+        <div className="mt-8 sm:mt-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+            <svg className="w-4 h-4 text-accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <p className="text-white/60 text-xs sm:text-sm font-medium">
+              Alternate hands up & down to count reps
+            </p>
+          </div>
         </div>
       </div>
     </div>
