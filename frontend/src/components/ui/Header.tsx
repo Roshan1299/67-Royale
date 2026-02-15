@@ -219,7 +219,7 @@ export function Header({ showNav = true }: HeaderProps) {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-accent-blue to-blue-600 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-accent-blue to-red-600 flex items-center justify-center">
                     <span className="text-white font-bold text-sm">{initials}</span>
                   </div>
                 )}

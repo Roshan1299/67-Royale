@@ -25,7 +25,7 @@ export default function TournamentPage() {
           {/* Coming Soon Card */}
           <div className="relative glass-panel rounded-2xl p-12 border border-white/10 overflow-hidden">
             {/* Animated background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/5 via-transparent to-blue-500/5 animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/5 via-transparent to-red-500/5 animate-pulse"></div>
 
             {/* Lock background pattern */}
             <div className="absolute top-8 right-8 opacity-5">

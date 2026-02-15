@@ -123,7 +123,7 @@ function SoloTab() {
               </div>
 
               {/* Avatar */}
-              <div className={`${entry.rank <= 3 ? 'w-12 h-12' : 'w-10 h-10'} rounded-full overflow-hidden flex-shrink-0 mr-4 bg-gradient-to-br from-accent-blue/20 to-purple-500/20 ring-2 ${entry.rank === 1 ? 'ring-yellow-400/40' : entry.rank === 2 ? 'ring-gray-300/40' : entry.rank === 3 ? 'ring-amber-600/40' : 'ring-white/10'}`}>
+              <div className={`${entry.rank <= 3 ? 'w-12 h-12' : 'w-10 h-10'} rounded-full overflow-hidden flex-shrink-0 mr-4 bg-gradient-to-br from-accent-blue/20 to-orange-500/20 ring-2 ${entry.rank === 1 ? 'ring-yellow-400/40' : entry.rank === 2 ? 'ring-gray-300/40' : entry.rank === 3 ? 'ring-amber-600/40' : 'ring-white/10'}`}>
                 {entry.photoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={entry.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />

@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
                     width: 28,
                     height: 28,
                     borderRadius: '50%',
-                    border: '2px solid #60a5fa',
+                    border: '2px solid #ef4444',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -125,11 +125,11 @@ export async function GET(request: NextRequest) {
                       width: 12,
                       height: 12,
                       borderRadius: '50%',
-                      border: '2px solid #60a5fa',
+                      border: '2px solid #ef4444',
                     }}
                   />
                 </div>
-                <span style={{ fontSize: 18, fontWeight: 600, color: '#60a5fa' }}>{modeLabel}</span>
+                <span style={{ fontSize: 18, fontWeight: 600, color: '#ef4444' }}>{modeLabel}</span>
               </div>
               <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>{dateStr}</span>
             </div>
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
                 }}
               >
                 {outcome === 'player1' && (
-                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#60a5fa', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
+                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#ef4444', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
                 )}
                 {outcome === 'player2' && (
                   <span style={{ fontSize: 10, fontWeight: 'bold', color: '#f87171', marginBottom: 8, letterSpacing: 1 }}>LOSER</span>
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
                     fontSize: 48,
                     fontWeight: 900,
                     fontStyle: 'italic',
-                    color: outcome === 'player1' ? '#60a5fa' : outcome === 'player2' ? '#f87171' : '#fff',
+                    color: outcome === 'player1' ? '#ef4444' : outcome === 'player2' ? '#f87171' : '#fff',
                     lineHeight: 1,
                   }}
                 >
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
                 }}
               >
                 {outcome === 'player2' && (
-                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#60a5fa', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
+                  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#ef4444', marginBottom: 8, letterSpacing: 1 }}>WINNER</span>
                 )}
                 {outcome === 'player1' && (
                   <span style={{ fontSize: 10, fontWeight: 'bold', color: '#f87171', marginBottom: 8, letterSpacing: 1 }}>LOSER</span>
@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
                     fontSize: 48,
                     fontWeight: 900,
                     fontStyle: 'italic',
-                    color: outcome === 'player2' ? '#60a5fa' : outcome === 'player1' ? '#f87171' : '#fff',
+                    color: outcome === 'player2' ? '#ef4444' : outcome === 'player1' ? '#f87171' : '#fff',
                     lineHeight: 1,
                   }}
                 >
@@ -262,7 +262,7 @@ export async function GET(request: NextRequest) {
                   gap: 10,
                   width: '100%',
                   padding: '18px 32px',
-                  backgroundColor: '#60a5fa',
+                  backgroundColor: '#ef4444',
                   borderRadius: 14,
                 }}
               >
@@ -300,7 +300,7 @@ export async function GET(request: NextRequest) {
             style={{
               width: 80,
               height: 80,
-              backgroundColor: '#60a5fa',
+              backgroundColor: '#ef4444',
               borderRadius: 16,
               display: 'flex',
               alignItems: 'center',

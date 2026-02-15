@@ -47,7 +47,7 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
         {/* Logo Icon */}
         <div className="flex justify-center mb-4 sm:mb-5">
           <div className="relative w-16 h-16 sm:w-20 sm:h-20">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/30 to-purple-500/30 rounded-2xl blur-xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-orange-500/30 rounded-2xl blur-xl"></div>
             <div className="relative w-full h-full rounded-2xl overflow-hidden">
               <Image
                 src={iconImage}
@@ -74,7 +74,7 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
 
         {/* Start Button */}
         <div className="relative inline-block group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-accent-blue via-cyan-400 to-accent-blue rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-300 animate-pulse"></div>
+          <div className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-400 to-red-500 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-300 animate-pulse"></div>
           <button
             onClick={onStart}
             className="relative flex items-center gap-3 px-10 sm:px-14 py-4 sm:py-5 bg-black rounded-xl text-white font-black text-lg sm:text-xl tracking-wide hover:scale-105 transition-transform duration-200"
@@ -87,7 +87,7 @@ export function StartScreen({ onStart, error, onRetry }: StartScreenProps) {
         {/* Instructions */}
         <div className="mt-8 sm:mt-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-            <svg className="w-4 h-4 text-accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <p className="text-white/60 text-xs sm:text-sm font-medium">
