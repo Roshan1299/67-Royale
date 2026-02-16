@@ -532,31 +532,29 @@ export default function DuelPage() {
   // Ref for countdown polling timer
   const countdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Start countdown - EXACT same logic as solo mode
-  // Fetches session token, transitions to countdown, monitors hands every 50ms
-  const startCountdown = useCallback(async () => {
-    if (!myPlayerKey || !duel) return;
-
-    // Fetch session token first
-    try {
-      const response = await fetch('/api/duel/session', {
+  // Pre-fetch session token when entering calibration so countdown starts instantly
+  useEffect(() => {
+    if (pageState === 'calibrating' && myPlayerKey && duel && !sessionTokenRef.current) {
+      fetch('/api/duel/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           duelId,
           player_key: myPlayerKey
         })
-      });
-
-      if (!response.ok) throw new Error('Failed to get session');
-      const data = await response.json();
-      sessionTokenRef.current = data.token;
-    } catch (err) {
-      console.error('Session error:', err);
-      return;
+      })
+        .then(res => res.ok ? res.json() : Promise.reject('Failed to get session'))
+        .then(data => { sessionTokenRef.current = data.token; })
+        .catch(err => console.error('Session pre-fetch error:', err));
     }
+  }, [pageState, myPlayerKey, duel, duelId]);
 
-    // Now do exact solo countdown with hand monitoring
+  // Start countdown - EXACT same logic as solo mode
+  // Transitions to countdown immediately, monitors hands every 50ms
+  const startCountdown = useCallback(() => {
+    if (!myPlayerKey || !duel) return;
+
+    // Countdown starts immediately (session token already pre-fetched)
     setPageState('countdown');
     setCountdownValue(3);
 
@@ -669,12 +667,14 @@ export default function DuelPage() {
     }
   }, []);
 
-  // Start camera when entering calibration
+  // Start camera when entering calibration (only initialize once)
   useEffect(() => {
     if (pageState === 'calibrating') {
-      initializeCamera();
-      // Reset detector to idle phase (like solo mode)
-      if (trackerRef.current) {
+      if (!trackerRef.current) {
+        // Only initialize camera if not already running
+        initializeCamera();
+      } else {
+        // Camera already running - just reset detector to idle phase
         const detector = (trackerRef.current as any).detector;
         if (detector) {
           detector.reset();
