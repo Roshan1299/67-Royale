@@ -228,6 +228,13 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
       // Go to calibration (countdown starts after calibration)
       setGameState('calibrating');
       calibrationTrackerRef.current?.reset();
+      // Reset detector to idle phase so countdown triggers properly
+      if (trackerRef.current) {
+        const detector = (trackerRef.current as any).detector;
+        if (detector) {
+          detector.reset();
+        }
+      }
     } catch (err) {
       console.error('Session error:', err);
       setCameraError('Failed to start game. Please try again.');
@@ -535,12 +542,26 @@ export function GamePanel({ onScoreSubmitted }: GamePanelProps) {
     setScoreId(null);
     setGameState('selecting');
     calibrationTrackerRef.current?.reset();
+    // Also reset the detector to idle phase so countdown works on replay
+    if (trackerRef.current) {
+      const detector = (trackerRef.current as any).detector;
+      if (detector) {
+        detector.reset();
+      }
+    }
   };
 
   // Cancel mode selection
   const handleCancelSelect = () => {
     setGameState('calibrating');
     calibrationTrackerRef.current?.reset();
+    // Reset detector to idle phase
+    if (trackerRef.current) {
+      const detector = (trackerRef.current as any).detector;
+      if (detector) {
+        detector.reset();
+      }
+    }
   };
 
   return (
