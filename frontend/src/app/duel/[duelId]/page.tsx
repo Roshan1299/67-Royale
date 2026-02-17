@@ -7,6 +7,7 @@ import { HandTracker, RepCounter, CalibrationTracker } from '@/lib/hand-tracking
 import { Header } from '@/components/ui/Header';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
 import { useWebRTC } from '@/hooks/useWebRTC';
+import { CountdownOverlay } from '@/components/game/CountdownOverlay';
 
 // Icons
 const CopyIcon = () => (
@@ -62,6 +63,8 @@ interface DuelData {
   status: string;
   start_at: number | null;
   lobby_code?: string | null;
+  tournament_id?: string | null;
+  tournament_match_id?: string | null;
 }
 
 interface DuelPlayer {
@@ -526,46 +529,102 @@ export default function DuelPage() {
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   }, [endGame]);
 
-  // Start countdown when calibration is done
-  const startCountdown = useCallback(async () => {
-    if (!myPlayerKey || !duel) return;
+  // Ref for countdown polling timer
+  const countdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    try {
-      const response = await fetch('/api/duel/session', {
+  // Pre-fetch session token when entering calibration so countdown starts instantly
+  useEffect(() => {
+    if (pageState === 'calibrating' && myPlayerKey && duel && !sessionTokenRef.current) {
+      fetch('/api/duel/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           duelId,
           player_key: myPlayerKey
         })
-      });
-
-      if (!response.ok) throw new Error('Failed to get session');
-      const data = await response.json();
-      sessionTokenRef.current = data.token;
-
-      const serverStartAt = data.start_at;
-      const now = Date.now();
-      const delay = Math.max(0, serverStartAt - now);
-
-      setPageState('countdown');
-      
-      let count = Math.ceil(delay / 1000);
-      setCountdownValue(Math.min(count, 5));
-
-      const countdownInterval = setInterval(() => {
-        count--;
-        if (count > 0) {
-          setCountdownValue(count);
-        } else {
-          clearInterval(countdownInterval);
-          setCountdownValue(0);
-          setTimeout(() => startGameplay(), 500);
-        }
-      }, 1000);
-    } catch (err) {
-      console.error('Session error:', err);
+      })
+        .then(res => res.ok ? res.json() : Promise.reject('Failed to get session'))
+        .then(data => { sessionTokenRef.current = data.token; })
+        .catch(err => console.error('Session pre-fetch error:', err));
     }
+  }, [pageState, myPlayerKey, duel, duelId]);
+
+  // Start countdown - EXACT same logic as solo mode
+  // Transitions to countdown immediately, monitors hands every 50ms
+  const startCountdown = useCallback(() => {
+    if (!myPlayerKey || !duel) return;
+
+    // Countdown starts immediately (session token already pre-fetched)
+    setPageState('countdown');
+    setCountdownValue(3);
+
+    let count = 3;
+    let countdownStartTime = Date.now();
+
+    const checkCountdown = () => {
+      // Check if hands are still level (exact solo logic)
+      if (!trackerRef.current) {
+        setPageState('calibrating');
+        return;
+      }
+
+      const detector = (trackerRef.current as any).detector;
+      if (!detector) {
+        setPageState('calibrating');
+        return;
+      }
+
+      const detectorState = (detector as any).state;
+      const leftY = detectorState.leftY;
+      const rightY = detectorState.rightY;
+      const calibrationTolerance = (detector as any).config.calibrationTolerance;
+      const bothHandsVisible = detectorState.bothHandsVisible;
+
+      // If hands disappear or become unlevel, reset to calibrating
+      if (!bothHandsVisible || leftY === null || rightY === null) {
+        console.log('⚠️ Hands lost during countdown - resetting');
+        if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
+        detector.reset(); // Reset detector to idle
+        setPageState('calibrating');
+        return;
+      }
+
+      const yDiff = Math.abs(leftY - rightY);
+      const handsLevel = yDiff <= calibrationTolerance;
+
+      if (!handsLevel) {
+        console.log('⚠️ Hands not level during countdown - resetting');
+        if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
+        detector.reset(); // Reset detector to idle
+        setPageState('calibrating');
+        return;
+      }
+
+      // Check if 1 second has passed
+      const elapsed = Date.now() - countdownStartTime;
+      if (elapsed >= 1000) {
+        count--;
+        countdownStartTime = Date.now();
+
+        if (count >= 0) {
+          setCountdownValue(count);
+        }
+
+        if (count < 0) {
+          // Countdown complete - start gameplay
+          setCountdownValue(0);
+          setTimeout(() => {
+            startGameplay();
+          }, 500);
+          return;
+        }
+      }
+
+      // Continue checking every 50ms
+      countdownTimerRef.current = setTimeout(checkCountdown, 50);
+    };
+
+    checkCountdown();
   }, [duelId, myPlayerKey, duel, startGameplay]);
 
   // Track state for calibration effect
@@ -608,22 +667,75 @@ export default function DuelPage() {
     }
   }, []);
 
-  // Start camera when entering calibration
+  // Start camera when entering calibration (only initialize once)
   useEffect(() => {
     if (pageState === 'calibrating') {
-      initializeCamera();
+      if (!trackerRef.current) {
+        // Only initialize camera if not already running
+        initializeCamera();
+      } else {
+        // Camera already running - just reset detector to idle phase
+        const detector = (trackerRef.current as any).detector;
+        if (detector) {
+          detector.reset();
+        }
+      }
     }
   }, [pageState, initializeCamera]);
 
-  // Handle calibration in a separate effect
+  // Handle calibration - EXACT same logic as solo mode
+  // When hands are level, immediately transition to countdown (no separate calibration timer)
   useEffect(() => {
-    if (pageState !== 'calibrating' || !calibrationTrackerRef.current || !trackingState) return;
+    if (pageState !== 'calibrating' || !trackingState || !trackerRef.current) return;
 
-    const calibrated = calibrationTrackerRef.current.processFrame(trackingState.bothHandsDetected);
-    if (calibrated) {
-      startCountdown();
-    }
-  }, [pageState, trackingState, startCountdown]);
+    const detector = (trackerRef.current as any).detector;
+    if (!detector) return;
+
+    const checkHandsLevel = () => {
+      if (pageState !== 'calibrating') return;
+
+      // Check if both hands are detected
+      if (trackingState.bothHandsDetected) {
+        const detectorState = (detector as any).state;
+        const leftY = detectorState.leftY;
+        const rightY = detectorState.rightY;
+        const calibrationTolerance = (detector as any).config.calibrationTolerance;
+
+        // Check if hands are level (same logic as BrainrotDetector calibration)
+        if (leftY !== null && rightY !== null) {
+          const yDiff = Math.abs(leftY - rightY);
+          const handsLevel = yDiff <= calibrationTolerance;
+
+          if (handsLevel) {
+            const phase = detector.getPhase();
+
+            // Only start once when hands become level
+            if (phase === 'idle') {
+              console.log('✅ Hands level detected - starting calibration + countdown');
+              detector.startCalibration(); // Start 3s calibration
+              startCountdown(); // Immediately start 3-2-1 countdown (like solo)
+            }
+          }
+        }
+      }
+
+      // Continue checking if still in calibrating state
+      if (pageState === 'calibrating') {
+        animationFrameRef.current = requestAnimationFrame(checkHandsLevel);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(checkHandsLevel);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+
+  // startCountdown intentionally omitted to avoid effect re-running every render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState, trackingState]);
 
   // Update container size on resize - match solo mode sizing (600px max on desktop)
   useEffect(() => {
@@ -669,6 +781,9 @@ export default function DuelPage() {
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (countdownTimerRef.current) {
+        clearTimeout(countdownTimerRef.current);
       }
     };
   }, []);
@@ -777,6 +892,46 @@ export default function DuelPage() {
   if (pageState === 'lobby') {
     const myPlayer = players.find(p => p.player_key === myPlayerKey);
     const opponent = players.find(p => p.player_key !== myPlayerKey);
+    const isTournamentMatch = duel?.tournament_id && duel?.tournament_match_id;
+
+    // Tournament match waiting screen (before opponent joins)
+    if (isTournamentMatch && !opponent) {
+      return (
+        <main className="min-h-screen bg-bg-primary bg-grid-pattern bg-gradient-radial">
+          <Header />
+          <div className="min-h-screen flex items-center justify-center p-4 pt-16 pb-12">
+            <div className="glass-panel p-8 rounded-xl max-w-md w-full text-center">
+              <div className="mb-6">
+                <div className="w-16 h-16 mx-auto mb-4 relative">
+                  <div className="absolute inset-0 bg-red-500/20 rounded-full animate-ping" />
+                  <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                  </div>
+                </div>
+                <h1 className="text-2xl font-bold text-white mb-2">Waiting for Opponent</h1>
+                <p className="text-white/40 text-sm">Your opponent will join shortly...</p>
+              </div>
+
+              <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+                <p className="text-white/40 text-xs mb-1">Mode</p>
+                <p className="text-lg font-bold text-white">
+                  {duel?.duration_ms ? formatDuration(duel.duration_ms) : '...'}
+                </p>
+              </div>
+
+              <button
+                onClick={() => router.push(`/tournament/${duel?.tournament_id}`)}
+                className="w-full py-2.5 rounded-lg bg-white/10 text-white/70 text-sm hover:bg-white/20 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </main>
+      );
+    }
 
     return (
       <main className="min-h-screen bg-bg-primary bg-grid-pattern bg-gradient-radial">
@@ -904,37 +1059,109 @@ export default function DuelPage() {
           ref={canvasRef}
             width={containerSize}
             height={containerSize}
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Minimal status indicator instead of full overlays */}
-        {pageState === 'calibrating' && (
-          <div className="absolute top-3 left-0 right-0 text-center z-10">
-            <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
-              trackingLost ? 'bg-red-500/80 text-white' : 'bg-accent-blue/80 text-black'
-            }`}>
-              {trackingState?.initState === 'loading' ? 'Loading model...' :
-               trackingState?.initState === 'warming_up' ? 'Warming up...' :
-               trackingLost ? 'Show both hands' : 'Hold steady...'}
-            </span>
-          </div>
-        )}
+        {/* Calibration - EXACT solo mode UI */}
+        {pageState === 'calibrating' && (() => {
+          // Calculate if hands are level (same logic as calibration check)
+          let handsLevel = false;
+          if (trackingState?.bothHandsDetected && trackerRef.current) {
+            const detector = (trackerRef.current as any).detector;
+            if (detector) {
+              const detectorState = (detector as any).state;
+              const leftY = detectorState.leftY;
+              const rightY = detectorState.rightY;
+              const calibrationTolerance = (detector as any).config.calibrationTolerance;
 
-        {pageState === 'countdown' && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <span className={`text-8xl font-black ${countdownValue === 0 ? 'text-accent-blue' : 'text-white'}`}>
-              {countdownValue === 0 ? 'GO!' : countdownValue}
-            </span>
-          </div>
-        )}
+              if (leftY !== null && rightY !== null) {
+                const yDiff = Math.abs(leftY - rightY);
+                handsLevel = yDiff <= calibrationTolerance;
+              }
+            }
+          }
+
+          return (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+              <div className="bg-black/60 backdrop-blur-md rounded-xl px-8 py-6 text-center border border-white/20">
+                <p className="text-white text-2xl font-bold mb-2">Hold your hands center level</p>
+                <p className="text-white/70 text-base mb-4">Stand back &bull; Good lighting</p>
+
+                {/* Status indicator */}
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  {!trackingState?.bothHandsDetected && (
+                    <span className="text-red-400 font-medium">⚠ Show both hands</span>
+                  )}
+                  {trackingState?.bothHandsDetected && !handsLevel && (
+                    <span className="text-yellow-400 font-medium">⚠ Keep hands level</span>
+                  )}
+                  {trackingState?.bothHandsDetected && handsLevel && (
+                    <span className="text-accent-blue font-medium animate-pulse">✓ Hold steady...</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {pageState === 'countdown' && (() => {
+          // Check if hands are still level during countdown
+          let handsLevel = true;
+          let bothHandsDetected = true;
+
+          if (trackerRef.current) {
+            const detector = (trackerRef.current as any).detector;
+            if (detector) {
+              const detectorState = (detector as any).state;
+              bothHandsDetected = detectorState.bothHandsVisible;
+
+              if (bothHandsDetected) {
+                const leftY = detectorState.leftY;
+                const rightY = detectorState.rightY;
+                const calibrationTolerance = (detector as any).config.calibrationTolerance;
+
+                if (leftY !== null && rightY !== null) {
+                  const yDiff = Math.abs(leftY - rightY);
+                  handsLevel = yDiff <= calibrationTolerance;
+                }
+              }
+            }
+          }
+
+          return (
+            <>
+              <CountdownOverlay value={countdownValue} />
+              {/* Show warning if hands become unlevel */}
+              {!bothHandsDetected && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20 pointer-events-none">
+                  <span className="bg-red-500/80 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    ⚠ Show both hands
+                  </span>
+                </div>
+              )}
+              {bothHandsDetected && !handsLevel && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20 pointer-events-none">
+                  <span className="bg-yellow-500/80 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    ⚠ Keep hands level
+                  </span>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {pageState === 'playing' && (
-          <div className="absolute top-3 left-0 right-0 text-center z-10">
-            <span className="bg-black/60 backdrop-blur-sm text-white text-lg font-bold px-4 py-1.5 rounded-full">
-              {duel && is67RepsMode(duel.duration_ms)
-                ? `${displayRepCount} / 67`
-                : `${displayRepCount} reps`}
-            </span>
+          <div className="absolute top-3 left-0 right-0 flex flex-col items-center z-10 pointer-events-none">
+            <div className="bg-black/50 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+              <span className="text-white text-2xl font-black tabular-nums">
+                {duel && is67RepsMode(duel.duration_ms) ? `${displayRepCount} / 67` : displayRepCount}
+              </span>
+              <span className="text-white/70 text-sm ml-2 font-medium tabular-nums">
+                {duel && is67RepsMode(duel.duration_ms)
+                  ? `${(elapsedTime / 1000).toFixed(1)}s`
+                  : `${(timeRemaining / 1000).toFixed(1)}s`}
+              </span>
+            </div>
           </div>
         )}
         </div>

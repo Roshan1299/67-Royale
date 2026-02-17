@@ -454,7 +454,7 @@ export default function ChallengePage() {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => router.push('/challenge/create')}
-              className="px-6 py-3 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600"
+              className="px-6 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600"
             >
               🎯 New Challenge
             </button>

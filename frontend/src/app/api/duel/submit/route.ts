@@ -3,7 +3,7 @@ import { getDb } from '@/lib/firebase/server';
 import { verifySessionToken, validateSubmissionTiming } from '@/lib/jwt';
 import { checkRateLimit, createRateLimitKey } from '@/lib/rate-limit';
 import { is67RepsMode, DURATION_6_7S, DURATION_20S, DURATION_67_REPS } from '@/types/game';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Firestore } from 'firebase-admin/firestore';
 
 // Helper to calculate rank stats for a score
 async function calculateRankStats(
@@ -57,6 +57,151 @@ async function calculateRankStats(
   const percentile = totalCount ? Math.round((allTimeRank / totalCount) * 100) : 1;
 
   return { dailyRank, allTimeRank, percentile, totalCount };
+}
+
+// Handle tournament match completion
+async function handleTournamentMatchCompletion(
+  db: Firestore,
+  duelData: Record<string, unknown>,
+  winnerUid: string,
+  loserUid: string,
+  scores: Map<string, number>, // Map of uid -> score
+) {
+  const tournamentMatchId = duelData.tournament_match_id as string | undefined;
+  const tournamentId = duelData.tournament_id as string | undefined;
+  if (!tournamentMatchId || !tournamentId) return;
+
+  try {
+    const matchDoc = await db.collection('tournament_matches').doc(tournamentMatchId).get();
+    if (!matchDoc.exists) return;
+    const match = matchDoc.data()!;
+
+    // Map scores by UID to ensure correct assignment
+    const player1Score = scores.get(match.player1_uid) ?? 0;
+    const player2Score = scores.get(match.player2_uid) ?? 0;
+
+    // Update match with scores and winner
+    await db.collection('tournament_matches').doc(tournamentMatchId).update({
+      status: 'complete',
+      winner_uid: winnerUid,
+      player1_score: player1Score,
+      player2_score: player2Score,
+    });
+
+    // Eliminate the loser
+    const loserSnap = await db.collection('tournament_participants')
+      .where('tournament_id', '==', tournamentId)
+      .where('uid', '==', loserUid)
+      .limit(1)
+      .get();
+    if (!loserSnap.empty) {
+      await loserSnap.docs[0].ref.update({
+        status: 'eliminated',
+        eliminated_round: match.round,
+      });
+    }
+
+    // Advance winner to next match
+    if (match.next_match_id) {
+      const nextMatchDoc = await db.collection('tournament_matches').doc(match.next_match_id).get();
+      if (nextMatchDoc.exists) {
+        // Get winner info
+        const winnerSnap = await db.collection('tournament_participants')
+          .where('tournament_id', '==', tournamentId)
+          .where('uid', '==', winnerUid)
+          .limit(1)
+          .get();
+
+        if (!winnerSnap.empty) {
+          const winner = winnerSnap.docs[0].data();
+          const isSlot1 = match.match_number % 2 === 0;
+          const update: Record<string, unknown> = {};
+
+          if (isSlot1) {
+            update.player1_uid = winnerUid;
+            update.player1_username = winner.username;
+            update.player1_photoURL = winner.photoURL;
+          } else {
+            update.player2_uid = winnerUid;
+            update.player2_username = winner.username;
+            update.player2_photoURL = winner.photoURL;
+          }
+
+          await db.collection('tournament_matches').doc(match.next_match_id).update(update);
+
+          // Check if both players present → set ready
+          const refreshed = await db.collection('tournament_matches').doc(match.next_match_id).get();
+          const nextData = refreshed.data()!;
+          if (nextData.player1_uid && nextData.player2_uid && nextData.status === 'pending') {
+            await db.collection('tournament_matches').doc(match.next_match_id).update({ status: 'ready' });
+          }
+        }
+      }
+    } else {
+      // This was the final match — tournament complete!
+      const winnerSnap = await db.collection('tournament_participants')
+        .where('tournament_id', '==', tournamentId)
+        .where('uid', '==', winnerUid)
+        .limit(1)
+        .get();
+
+      const winnerUsername = winnerSnap.empty ? 'Unknown' : winnerSnap.docs[0].data().username;
+
+      await db.collection('tournaments').doc(tournamentId).update({
+        status: 'complete',
+        completed_at: new Date().toISOString(),
+        winner_uid: winnerUid,
+        winner_username: winnerUsername,
+      });
+
+      // Award trophies
+      const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+      const totalRounds = tournamentDoc.data()?.total_rounds || 3;
+
+      // Winner: +100, Runner-up: +50, Semifinalists: +20
+      const trophyAwards: { uid: string; amount: number }[] = [
+        { uid: winnerUid, amount: 100 },
+        { uid: loserUid, amount: 50 },
+      ];
+
+      // Find semifinalists (eliminated in the round before final)
+      const semiSnap = await db.collection('tournament_participants')
+        .where('tournament_id', '==', tournamentId)
+        .where('eliminated_round', '==', totalRounds - 1)
+        .get();
+
+      for (const doc of semiSnap.docs) {
+        trophyAwards.push({ uid: doc.data().uid, amount: 20 });
+      }
+
+      for (const award of trophyAwards) {
+        const ref = db.collection('user_stats').doc(award.uid);
+        await ref.set(
+          { trophies: FieldValue.increment(award.amount) },
+          { merge: true }
+        );
+      }
+    }
+
+    // Update current_round on the tournament
+    const allMatches = await db.collection('tournament_matches')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    let maxActiveRound = 1;
+    for (const doc of allMatches.docs) {
+      const m = doc.data();
+      if ((m.status === 'ready' || m.status === 'active') && m.round > maxActiveRound) {
+        maxActiveRound = m.round;
+      }
+    }
+
+    await db.collection('tournaments').doc(tournamentId).update({
+      current_round: maxActiveRound,
+    });
+  } catch (err) {
+    console.error('Tournament match completion error:', err);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -268,6 +413,38 @@ export async function POST(request: NextRequest) {
           if (opponent.uid) await updateTrophies(opponent.uid, opponentTrophyDelta, opponent.username, opponent.photoURL);
         } catch (err) {
           console.error('Trophy update failed:', err);
+        }
+      }
+
+      // Tournament match completion hook
+      if (duel && (duel as Record<string, unknown>).tournament_match_id && myPlayer && opponent) {
+        const duelData = duel as Record<string, unknown>;
+        // Determine absolute winner (not relative to submitter)
+        let absoluteWinner: string | null = null;
+        let absoluteLoser: string | null = null;
+        if (myPlayer.score !== null && opponent.score !== null) {
+          if (is67Reps) {
+            absoluteWinner = myPlayer.score < opponent.score ? (myPlayer.uid || '') : (opponent.uid || '');
+            absoluteLoser = myPlayer.score < opponent.score ? (opponent.uid || '') : (myPlayer.uid || '');
+          } else {
+            absoluteWinner = myPlayer.score > opponent.score ? (myPlayer.uid || '') : (opponent.uid || '');
+            absoluteLoser = myPlayer.score > opponent.score ? (opponent.uid || '') : (myPlayer.uid || '');
+          }
+          if (myPlayer.score === opponent.score) {
+            // Tie: first submitter wins
+            absoluteWinner = myPlayer.uid || '';
+            absoluteLoser = opponent.uid || '';
+          }
+        }
+        if (absoluteWinner && absoluteLoser) {
+          // Create score map by UID
+          const scoreMap = new Map<string, number>();
+          if (myPlayer.uid) scoreMap.set(myPlayer.uid, myPlayer.score ?? 0);
+          if (opponent.uid) scoreMap.set(opponent.uid, opponent.score ?? 0);
+
+          await handleTournamentMatchCompletion(
+            db, duelData, absoluteWinner, absoluteLoser, scoreMap
+          );
         }
       }
 

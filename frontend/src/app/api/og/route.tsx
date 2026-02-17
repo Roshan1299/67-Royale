@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
                   style={{
                     width: 28,
                     height: 28,
-                    backgroundColor: '#60a5fa',
+                    backgroundColor: '#ef4444',
                     borderRadius: 6,
                     display: 'flex',
                     alignItems: 'center',
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
                 >
                   <span style={{ fontSize: 14, fontWeight: 'bold', color: '#000' }}>67</span>
                 </div>
-                <span style={{ fontSize: 18, fontWeight: 600, color: '#60a5fa' }}>{modeLabel}</span>
+                <span style={{ fontSize: 18, fontWeight: 600, color: '#ef4444' }}>{modeLabel}</span>
               </div>
               <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>{dateStr}</span>
             </div>
@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
                   style={{
                     fontSize: 96,
                     fontWeight: 900,
-                    color: '#60a5fa',
+                    color: '#ef4444',
                     lineHeight: 1,
                   }}
                 >
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
                   style={{
                     fontSize: 32,
                     fontWeight: 600,
-                    color: '#60a5fa',
+                    color: '#ef4444',
                     marginLeft: 4,
                   }}
                 >
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
                     }}
                   >
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontWeight: 500 }}>TOP</span>
-                    <span style={{ fontSize: 22, fontWeight: 'bold', color: '#60a5fa' }}>{percentile}%</span>
+                    <span style={{ fontSize: 22, fontWeight: 'bold', color: '#ef4444' }}>{percentile}%</span>
                   </div>
                 </div>
               )}
@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
                   gap: 10,
                   width: '100%',
                   padding: '18px 32px',
-                  backgroundColor: '#60a5fa',
+                  backgroundColor: '#ef4444',
                   borderRadius: 14,
                 }}
               >
@@ -311,7 +311,7 @@ export async function GET(request: NextRequest) {
             style={{
               width: 80,
               height: 80,
-              backgroundColor: '#60a5fa',
+              backgroundColor: '#ef4444',
               borderRadius: 16,
               display: 'flex',
               alignItems: 'center',
